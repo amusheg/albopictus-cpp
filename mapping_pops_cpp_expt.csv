@@ -1,0 +1,31 @@
+﻿pop,City,latitude,longitude,country,only_2008
+NEW,"Jersey City, NJ",40.73,-74.1,US,n
+BER,"Sicklerville, NJ",39.77,-74.9,US,n
+WAV,"Waverly, VA",37.05,-77.1,US,n
+MAN,"Manassas, VA",38.63,-77.4,US,n
+FAY,"Fayetteville, NC",35.03,-78.1,US,n
+NVA,"Henderson, NC",36.35,-78.4,US,n
+ZIO,"New Zion, SC",33.75,-80,US,n
+PBS,"West Palm Beach, FL",26.67,-80.2,US,n
+FEM,"Vero Beach, FL",27.58,-80.4,US,n
+OAK,"Oak Hill, FL",28.85,-80.9,US,n
+BRU,"Brunswick, GA",31.13,-81.5,US,n
+JAC,"Jacksonville, FL",30.33,-81.8,US,n
+OKI,"Okinawa City, Okinawa",26.2,127.8,JP,n
+KAG,"Kagoshima City, Kagoshima",31.6,130.6,JP,n
+SEN,"Sendai, Miyagi",38.29,140.9,JP,n
+YAT,"Yatsushiro, Kumamoto",32.65,130.6,JP,n
+SAG,Saga Prefecture,33.25,130.3,JP,n
+YAM,Yamaguchi Prefecture,34.18,131.5,JP,n
+KYO,Kyoto,35,135.8,JP,n
+TAK,"Takashima, Shiga",35.35,136,JP,n
+KAN,"Kanazawa, Ishikawa",36.56,136.7,JP,n
+NIG,"Niigata City, Niigata",37.91,139,JP,n
+HIR,"Hiroshima City, Hiroshima",34.38,132.5,JP,y
+KHO,"Koriyama City, Fukushima",37.37,140.4,JP,y
+SHI,"Shimonoseki City, Yamaguchi",34.02,130.9,JP,y
+UTS,"Utsunomiya City, Tochigi",36.53,139.9,JP,y
+AIZ,"Aizuwakamatsu City, Fukushima",37.47,139.9,JP,y
+SAK,"Sakata City, Yamagata",38.92,139.8,JP,y
+TAN,"Tanegashima City, Kagoshima",30.72,131,JP,y
+TOK,"Tokyo City, Tokyo",35.63,139.6,JP,y

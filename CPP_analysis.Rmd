@@ -49,7 +49,6 @@ DI_summary$DI<-DI_summary$emb/DI_summary$total
 ```
 
 
-
 ```{r totals_plot}
 hist(DI_summary$total, main="Total number of viable eggs per cage")
   
@@ -96,7 +95,7 @@ cpp_values<-data.frame(ED(d.model.fit, 50))
 
 ```{r CPP_calc_2008}
 DI_summary_2008<-data.frame(read.csv("CPP_2008.csv"))
-d.model.fit.2008 <- drm(DI ~ PP, data = DI_summary_2008, curveid = POP, fct = LL.5())
+d.model.fit.2008 <- drm(DI ~ photoperiod, data = DI_summary_2008, curveid = pop, fct = LL.5())
   
 #plot(d.model.fit.2008, log = "")
 # output the parameters of the model fits:
@@ -114,20 +113,22 @@ cpp_2019$pop<-str_sub(cpp_2019$pop,3,5)
 popdata_2019<-DI_summary %>% group_by(pop) %>% 
   summarize(lat=first(lat), country=first(country))
 cpp_2019<-right_join(cpp_2019, popdata_2019, by="pop")
-#drop PBS from this list for now; CPP estimate doesn't make sense
-#cpp_2019<-filter(cpp_2019, pop!="PBS")
 cpp_2019$year<-rep("2019", nrow(cpp_2019))
+colnames(cpp_2019)[colnames(cpp_2019)=="Std..Error"] <- "StdError"
+
+
 
 cpp_2008<-data.frame(ED(d.model.fit.2008, 50)) %>% rownames_to_column(var="pop")
 cpp_2008$pop<-str_sub(cpp_2008$pop,3,5)
-popdata_2008<-DI_summary_2008 %>% group_by(POP) %>% 
-  summarize(lat=first(LAT), country=first(COUNTRY), year=first(YEAR)) 
-colnames(popdata_2008)[1]<-"pop"
+colnames(cpp_2008)[colnames(cpp_2008)=="Std..Error"] <- "StdError"
+popdata_2008<-DI_summary_2008 %>% group_by(pop) %>% 
+  summarize(country=first(country), lat=first(lat), year=first(year)) 
+#colnames(popdata_2008)[1]<-"pop"
 cpp_2008<-right_join(cpp_2008, popdata_2008, by="pop")
 
 cpp_1988<-data.frame(read.csv("CPP_1988.csv")) 
 cpp_1988$pop<-na_if(cpp_1988$pop, "NA")
-cpp_1988$Std..Error<-na_if(cpp_1988$Std..Error, "NA")
+cpp_1988$StdError<-na_if(cpp_1988$StdError, "NA")
 
 
 cpp_2<-rbind(cpp_1988, cpp_2008, cpp_2019) 
@@ -141,28 +142,28 @@ ggplot(cpp_2, aes(x=lat, y=Estimate, fill=year, color=year)) +
   scale_color_manual(values=c("white","gray","black")) + 
   scale_fill_manual(values=c("white","gray","black"))+ 
   geom_point(shape=21, color="black") + 
-  geom_errorbar(aes(ymin=Estimate-Std..Error, ymax=Estimate+Std..Error), na.rm=TRUE) + 
+  geom_errorbar(aes(ymin=Estimate-StdError, ymax=Estimate+StdError), na.rm=TRUE) + 
   facet_grid(~country) + stat_smooth(method=lm, se=FALSE)
 ```
 ```{r }
 ggplot(cpp_2, aes(x=lat, y=Estimate, color=country)) + 
   geom_point() + 
-  geom_errorbar(aes(ymin=Estimate-Std..Error, ymax=Estimate+Std..Error), na.rm=TRUE) + 
+  geom_errorbar(aes(ymin=Estimate-StdError, ymax=Estimate+StdError), na.rm=TRUE) + 
   facet_grid(~year) + stat_smooth(method=lm, se=FALSE)
 ```
 
 ```{r incidence_lat_year}
-DI_short_2008<-filter(DI_summary_2008, PP==8)
-names(DI_short_2008)<-c("pop","country","lat","pp","year","DI")
+DI_short_2008<-filter(DI_summary_2008, photoperiod==8)
 
+#unnecessary renaming between pp/photoperiod - harmonize @ beginning?
 DI_short_2018<-filter(DI_summary, pp==8) %>% group_by(pop) %>% 
-  summarize(country=first(country), lat=first(lat), pp=first(pp), emb=sum(emb), total=sum(total))
+  summarize(country=first(country), lat=first(lat), photoperiod=first(pp), emb=sum(emb), total=sum(total))
 DI_short_2018$DI<-DI_short_2018$emb/DI_short_2018$total
 DI_short_2018<-DI_short_2018[,c(1:4,7)] 
 DI_short_2018$year<-rep("2018",nrow(DI_short_2018))
-DI_short_2018<-DI_short_2018[,c(1,2,3,4,6,5)]
 
 DI_short_2<-rbind(DI_short_2008, DI_short_2018)
+write_csv(DI_short_2, "diapause_incidence_8h_2008_2018.csv")
 
 ggplot(DI_short_2, aes(x=lat, y=DI, color=year, label=pop)) + scale_color_manual(values=c("gray","black")) + 
   geom_point() + facet_grid(~country) 
