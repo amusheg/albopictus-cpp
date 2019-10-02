@@ -11,13 +11,17 @@ install.packages("knitr")
 install.packages("tidyverse") #1.2.1
 install.packages("drc") #3.0.1
 install.packages("stringr")
+install.packages("geosphere")
+install.packages("lubridate")
 ```
 
 ```{r message=FALSE}
 library("drc") #3.0.1
-library("knitr")
+library("knitr") #1.25
 library("tidyverse") #1.2.1
-library("stringr")
+library("stringr") #1.4.0
+library("geosphere") #1.5.10
+library("lubridate") #1.7.4
 ```
 
 ```{r datasheet}
@@ -172,6 +176,26 @@ ggplot(DI_short_2, aes(x=lat, y=DI, color=year, label=pop)) + scale_color_manual
 
 
 
+```{r day_function}
+findDate<-function(lat, pp, year) {
+#generate day lengths at latitude between July 1 and Dec 31
+x<-daylength(lat,182:365)
+#find closest day length in vector
+daynumber<-which.min(abs(x-pp))
+#convert day number to date
+origin<-as.character(paste(year, "-07-01",sep=""))
+return(as.character(as.Date(daynumber, origin=origin)))
+}
+
+```
+
+
+```{r}
+cpp_2$date<-mapply(findDate, lat=cpp_2$lat, pp=cpp_2$Estimate, year=cpp_2$year)
+cpp_2$date_again<-format(as.Date(cpp_2$date), "%mm-%dd")
+cpp_2$date_again<-as.Date(cpp_2$date_again, format="%mm-%dd")
+ggplot(filter(cpp_2, year!=1988), aes(x=lat, y=date_again, color=year)) + geom_point() + scale_y_date(date_breaks = "weeks" , date_minor_breaks="days", date_labels = "%b-%d") + facet_grid(~country) + theme_bw()
+```
 
 
 
