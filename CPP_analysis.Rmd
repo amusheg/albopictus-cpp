@@ -1,9 +1,9 @@
 ---
 title: "CPP_analysis"
 output:
-  word_document: default
-  pdf_document: default
   html_document: default
+  pdf_document: default
+  word_document: default
 ---
 
 
@@ -40,17 +40,27 @@ plot(blockAB$yield ~ blockAB$TotalLarvaeEmbryos)
 
 ```{r filter papers}
 #removing papers with <60% or >100% initial count
-blockAB <- filter(blockAB, yield<=1) %>% filter(yield>=0.6) 
+blockAB_unfiltered<-blockAB
+blockAB_filtered <- filter(blockAB, yield<=1) %>% filter(yield>=0.6) 
 ```
 
 
 ```{r summarize}
+
+DI_summarize <- function(blockAB) {
 DI_summary <- blockAB %>% 
   group_by(CageID) %>% 
   summarise(pop=first(Population), pp=mean(Photoperiod), lat=mean(Lat), block=first(Block), country=first(Country), h1=sum(H1Count), h2=sum(H2Count), emb=sum(EmbryoCount)) %>% 
   filter(h1+h2+emb>100)
 DI_summary$total<-DI_summary$h1+DI_summary$h2+DI_summary$emb
 DI_summary$DI<-DI_summary$emb/DI_summary$total
+return(DI_summary)
+}
+
+```
+
+```{r}
+DI_summary<-DI_summarize(blockAB_filtered)
 ```
 
 
@@ -76,12 +86,12 @@ ggplot(DI_short, aes(x=lat, y=DI, color=country)) + geom_point() + theme_bw() +s
 d and c are upper and lower limit, respectively
 e is ED50
 b is relative slope aroung e
-f represents asymmetry in the model; f=1 if function is symmetrical 
+f represents asymmetry in the model; f=1 if  is symmetrical 
 
 ```{r CPP_calc_2018}
 #From Kevin Emerson
 
-# the following fits the models of the given function using data from the
+# the following fits the models of the given  using data from the
 # data.frame d separately for the various treatments using a 5 parameter
 # logistic model
 d.model.fit <- drm(DI ~ pp, data = DI_summary, curveid = pop, fct = LL.5())
@@ -96,7 +106,7 @@ cpp_values<-data.frame(ED(d.model.fit, 50))
 
 ```
 
-#Recalculating CPP values for 2008 photoperiod response curves
+# Recalculating CPP values for 2008 photoperiod response curves
 
 ```{r CPP_calc_2008}
 DI_summary_2008<-data.frame(read.csv("CPP_2008.csv"))
@@ -109,7 +119,7 @@ summary(d.model.fit)
 ED(d.model.fit.2008, 50)
 cpp_values_2008<-data.frame(ED(d.model.fit.2008, 50))
 ```
-#Combine and format CPP value tables from 1988, 2008 and 2018
+# Combine and format CPP value tables from 1988, 2008 and 2018
 
 ```{r collate_cpp_values}
 cpp_2018<-data.frame(ED(d.model.fit, 50))
@@ -133,6 +143,7 @@ cpp_1988$pop<-na_if(cpp_1988$pop, "NA")
 cpp_1988$StdError<-na_if(cpp_1988$StdError, "NA")
 
 cpp_2<-rbind(cpp_1988, cpp_2008, cpp_2018) 
+write.csv(cpp_2, "cpp_calcs_filtered.csv")
 
 ```
 
@@ -147,7 +158,7 @@ ggplot(cpp_2, aes(x=lat, y=Estimate, fill=year, color=year)) +
   facet_grid(~country) + stat_smooth(method=lm, se=FALSE)
 ```
 ```{r }
-ggplot(cpp_2, aes(x=lat, y=Estimate, color=country)) + 
+ggplot(filter(cpp_2, year!=1988), aes(x=lat, y=Estimate, color=country)) + 
   geom_point() + 
   geom_errorbar(aes(ymin=Estimate-StdError, ymax=Estimate+StdError), na.rm=TRUE) + 
   facet_grid(~year) + stat_smooth(method=lm, se=FALSE)
@@ -187,12 +198,13 @@ return(as.character(as.Date(daynumber, origin=origin)))
 ```
 
 
-```{r}
+```{r approx_dates, include=FALSE}
 cpp_2$date<-mapply(findDate, lat=cpp_2$lat, pp=cpp_2$Estimate, year=cpp_2$year)
 cpp_2$estimated_date<-format(as.Date(cpp_2$date), "%mm-%dd")
 cpp_2$estimated_date<-as.Date(cpp_2$estimated_date, format="%mm-%dd")
-ggplot(cpp_2, aes(x=lat, y=estimated_date, color=year)) + geom_point() + scale_y_date(date_breaks = "weeks" , date_minor_breaks="days", date_labels = "%b-%d") + facet_grid(~country) + theme_bw() + stat_smooth(method=lm, se=FALSE)
+date_plot<-ggplot(cpp_2, aes(x=lat, y=estimated_date, color=year)) + geom_point() + scale_y_date(date_breaks = "weeks" , date_minor_breaks="days", date_labels = "%b-%d") +  facet_grid(~country) + theme_bw() + stat_smooth(method=lm, se=FALSE)
 ```
 
-
-
+The approximate date of 50% diapause in Berlin, NJ in 2018 was `r cpp_2[cpp_2$pop=="BER" & cpp_2$year==2018,8] %>% format("%B %d")`. 
+```{r echo=FALSE}
+date_plot
