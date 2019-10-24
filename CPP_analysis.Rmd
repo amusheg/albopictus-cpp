@@ -50,7 +50,7 @@ blockAB_filtered <- filter(blockAB, yield<=1) %>% filter(yield>=0.6)
 DI_summarize <- function(blockAB) {
 DI_summary <- blockAB %>% 
   group_by(CageID) %>% 
-  summarise(pop=first(Population), pp=mean(Photoperiod), lat=mean(Lat), block=first(Block), country=first(Country), h1=sum(H1Count), h2=sum(H2Count), emb=sum(EmbryoCount)) %>% 
+  summarise(pop=first(Population), pp=mean(Photoperiod), block=first(Block), lat=mean(Lat), block=first(Block), country=first(Country), h1=sum(H1Count), h2=sum(H2Count), emb=sum(EmbryoCount)) %>% 
   filter(h1+h2+emb>100)
 DI_summary$total<-DI_summary$h1+DI_summary$h2+DI_summary$emb
 DI_summary$DI<-DI_summary$emb/DI_summary$total
@@ -126,7 +126,7 @@ cpp_2018<-data.frame(ED(d.model.fit, 50))
 cpp_2018<-rownames_to_column(cpp_2018, var="pop") 
 cpp_2018$pop<-str_sub(cpp_2018$pop,3,5)
 popdata_2018<-DI_summary %>% group_by(pop) %>% 
-  summarize(lat=first(lat), country=first(country))
+  summarize(lat=first(lat), country=first(country), block=first(block))
 cpp_2018<-right_join(cpp_2018, popdata_2018, by="pop")
 cpp_2018$year<-rep("2018", nrow(cpp_2018))
 colnames(cpp_2018)[colnames(cpp_2018)=="Std..Error"] <- "StdError"
@@ -146,6 +146,11 @@ cpp_2<-rbind(cpp_1988, cpp_2008, cpp_2018)
 write.csv(cpp_2, "cpp_calcs_filtered.csv")
 
 ```
+
+```{r}
+ggplot(cpp_2018, aes(x=lat, y=Estimate, color=block)) + geom_point() + stat_smooth()
+```
+
 
 # CPP by latitude, country and year
 
