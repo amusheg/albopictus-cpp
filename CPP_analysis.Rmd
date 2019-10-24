@@ -162,11 +162,23 @@ ggplot(cpp_2, aes(x=lat, y=Estimate, fill=year, color=year)) +
   geom_errorbar(aes(ymin=Estimate-StdError, ymax=Estimate+StdError), na.rm=TRUE) + 
   facet_grid(~country) + stat_smooth(method=lm, se=FALSE)
 ```
+```{r}
+cppmodel<-lm(Estimate~lat*country*year, data=filter(cpp_2, year!=1988))
+anova(cppmodel)
+```
+
+
 ```{r }
-ggplot(filter(cpp_2, year!=1988), aes(x=lat, y=Estimate, color=country)) + 
+ggplot(cpp_2, aes(x=lat, y=Estimate, color=country)) + 
   geom_point() + 
   geom_errorbar(aes(ymin=Estimate-StdError, ymax=Estimate+StdError), na.rm=TRUE) + 
   facet_grid(~year) + stat_smooth(method=lm, se=FALSE)
+```
+```{r}
+ggplot(filter(cpp_2, year!=1988), aes(x=lat, y=Estimate, color=country, shape=year)) + 
+  geom_point() +
+  geom_errorbar(aes(ymin=Estimate-StdError, ymax=Estimate+StdError), na.rm=TRUE) + 
+  stat_smooth(method=lm, se=FALSE, aes(linetype=year)) 
 ```
 
 ```{r incidence_lat_year}
