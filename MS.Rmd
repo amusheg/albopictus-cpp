@@ -239,9 +239,9 @@ us_DI_pies<-remove_geom(us_map, "label") + geom_scatterpie(data=filter(DI_info, 
 jp_DI_pies<-remove_geom(japan_map, "label") + geom_scatterpie(data=filter(DI_info, country=="JP"), aes(x=longitude, y=latitude, r=0.5), cols=c("Diapause", "Nondiapause")) + 
   facet_grid(~year) + theme(axis.title.x=element_blank(), axis.title.y=element_blank())
 
-DI_pies_2018<-plot_grid(remove_geom(us_map, "label") %>% remove_geom("point") + ylim(24,48) + geom_scatterpie(data=filter(DI_info, country=="US", year=="2018"), aes(x=longitude, y=latitude, r=.7, alpha=0.95), cols=c("Diapause", "Nondiapause")) + scale_fill_manual(values=c("black","white")) + theme(axis.title.x=element_blank(), axis.text.x=element_blank(), axis.ticks.x=element_blank(), axis.title.y=element_blank(), legend.position="none"), 
+DI_pies_2018<-plot_grid(remove_geom(us_map, "label") %>% remove_geom("point") + ylim(24,48) + geom_scatterpie(data=filter(DI_info, country=="US", year=="2018"), aes(x=longitude, y=latitude, r=.7, alpha=0.95), cols=c("Diapause", "Nondiapause")) + scale_fill_manual(values=c("black","white")) + theme(axis.title.x=element_blank(), axis.text.x=element_blank(), axis.ticks.x=element_blank(), axis.title.y=element_blank(), legend.position="none", plot.margin = unit(c(0, 0, 0, 0), "null")), 
                         
-remove_geom(japan_map, "label") %>% remove_geom("point") + ylim(24,48) + geom_scatterpie(data=filter(DI_info, country=="JP", year=="2018"), aes(x=longitude, y=latitude, r=.7, alpha=0.95), cols=c("Diapause", "Nondiapause")) + scale_fill_manual(values=c("black","white")) + theme(axis.title.x=element_blank(), axis.text.x=element_blank(), axis.ticks.x=element_blank(), axis.title.y=element_blank(), legend.position="none"), ncol=2, align="hv")
+remove_geom(japan_map, "label") %>% remove_geom("point") + ylim(24,48) + geom_scatterpie(data=filter(DI_info, country=="JP", year=="2018"), aes(x=longitude, y=latitude, r=.7, alpha=0.95), cols=c("Diapause", "Nondiapause")) + scale_fill_manual(values=c("black","white")) + theme(axis.title.x=element_blank(), axis.text.x=element_blank(), axis.ticks.x=element_blank(), axis.title.y=element_blank(), legend.position="none", plot.margin = unit(c(0, 0, 0, 0), "null")), ncol=2, align="hv")
 ```
 
 ## Introduction
