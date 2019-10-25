@@ -1,10 +1,15 @@
 ---
 title: "Ae albopictus CPP manuscript"
+header-includes: #allows you to add in your own Latex packages
+- \usepackage{float} #use the 'float' package
+- \floatplacement{figure}{H} #make every figure with caption = h
+- \usepackage{caption}
+- \captionsetup[figure]{labelformat=empty}
+- \captionsetup[table]{labelformat=empty}
 output:
-  word_document: 
-    fig_width: 3.5
-    fig_height: 3
+  pdf_document: default
   html_document: default
+  word_document: default
 ---
 
 ```{r eval=FALSE, message=FALSE, include=FALSE}
@@ -76,7 +81,7 @@ hist(DI_summary$total, main="Total number of viable eggs per cage")
 
 ```{r DI_plot, echo=FALSE, include=FALSE}
 #plot with DI at 8 h shown as TWO DIFFERENT points (corresponding to two cabinets)
-ggplot(DI_summary, aes(x=pp, y=DI, group=pop)) + geom_point() + facet_wrap(~pop)
+DI_plot<-ggplot(DI_summary, aes(x=pp, y=DI, group=pop)) + geom_point() + facet_wrap(~pop)
   
 ```
 
@@ -134,7 +139,7 @@ write.csv(cpp_2, "cpp_calcs_filtered.csv")
 ```
 
 ```{r Japan_US_years, echo=FALSE, include=FALSE}
-ggplot(cpp_2, aes(x=lat, y=Estimate, fill=year, color=year)) + 
+cpp_japan_us_years<-ggplot(cpp_2, aes(x=lat, y=Estimate, fill=year, color=year)) + 
   scale_color_manual(values=c("white","gray","black")) + 
   scale_fill_manual(values=c("white","gray","black"))+ 
   geom_point(shape=21, color="black") + 
@@ -156,10 +161,10 @@ ggplot(cpp_2, aes(x=lat, y=Estimate, color=country)) +
 ```
 
 ```{r, echo=FALSE, include=FALSE}
-ggplot(filter(cpp_2, year!=1988), aes(x=lat, y=Estimate, color=country, shape=year)) + 
-  geom_point() +
+cpp_08_18_shifts<-ggplot(filter(cpp_2, year!=1988), aes(x=lat, y=Estimate, color=country, shape=year)) + 
+  geom_point() + scale_color_manual(values=c("red", "blue")) +
   geom_errorbar(aes(ymin=Estimate-StdError, ymax=Estimate+StdError), na.rm=TRUE) + 
-  stat_smooth(method=lm, se=FALSE, aes(linetype=year)) 
+  stat_smooth(method=lm, se=FALSE, aes(linetype=year)) + theme_bw() + theme(legend.position=c(.8,.25))
 ```
 
 ```{r incidence_lat_year, echo=FALSE, include=FALSE}
@@ -174,7 +179,7 @@ write_csv(DI_short_2, "diapause_incidence_8h_2008_2018.csv")
 incidence_lat_year_plot<-ggplot(DI_short_2, aes(x=lat, y=DI, color=year, label=pop)) + scale_color_manual(values=c("gray","black")) + 
   geom_point() + facet_grid(~country) 
 
-country_DI_2018<-ggplot(DI_short_2018, aes(x=lat, y=DI, color=country)) + scale_color_manual(values=c("red","blue")) + geom_point() + theme_bw() + stat_smooth() + theme(legend.position="none")
+country_DI_2018<-ggplot(DI_short_2018, aes(x=lat, y=DI, color=country)) + scale_color_manual(values=c("red","blue")) + geom_point() + theme_bw() + stat_smooth() + theme(legend.position="none", plot.margin = unit(c(0, 0, 0, 0), "cm"))
 ```
 
 ```{r dimodel, echo=FALSE, include=FALSE}
@@ -229,7 +234,7 @@ us_DI_pies<-remove_geom(us_map, "label") + geom_scatterpie(data=filter(DI_info, 
 jp_DI_pies<-remove_geom(japan_map, "label") + geom_scatterpie(data=filter(DI_info, country=="JP"), aes(x=longitude, y=latitude, r=0.5), cols=c("Diapause", "Nondiapause")) + 
   facet_grid(~year) + theme(axis.title.x=element_blank(), axis.title.y=element_blank())
 
-DI_pies_2018<-plot_grid(remove_geom(us_map, "label") + geom_scatterpie(data=filter(DI_info, country=="US", year=="2018"), aes(x=longitude, y=latitude, r=0.5), cols=c("Diapause", "Nondiapause")) + scale_fill_manual(values=c("black","white")) + theme(axis.title.x=element_blank(), axis.text.x=element_blank(), axis.ticks.x=element_blank(), axis.title.y=element_blank(), legend.position="none"), remove_geom(japan_map, "label") + geom_scatterpie(data=filter(DI_info, country=="JP", year=="2018"), aes(x=longitude, y=latitude, r=0.5), cols=c("Diapause", "Nondiapause")) + scale_fill_manual(values=c("black","white")) + theme(axis.title.x=element_blank(), axis.text.x=element_blank(), axis.ticks.x=element_blank(), axis.title.y=element_blank(), legend.position="none"), ncol=1, align="hv")
+DI_pies_2018<-plot_grid(remove_geom(us_map, "label") + geom_scatterpie(data=filter(DI_info, country=="US", year=="2018"), aes(x=longitude, y=latitude, r=0.5), cols=c("Diapause", "Nondiapause")) + scale_fill_manual(values=c("black","white")) + theme(axis.title.x=element_blank(), axis.text.x=element_blank(), axis.ticks.x=element_blank(), axis.title.y=element_blank(), legend.position="none", plot.margin = unit(c(0, 0, 0, 0), "cm")), remove_geom(japan_map, "label") + geom_scatterpie(data=filter(DI_info, country=="JP", year=="2018"), aes(x=longitude, y=latitude, r=0.5), cols=c("Diapause", "Nondiapause")) + scale_fill_manual(values=c("black","white")) + theme(axis.title.x=element_blank(), axis.text.x=element_blank(), axis.ticks.x=element_blank(), axis.title.y=element_blank(), legend.position="none", plot.margin = unit(c(0, 0, 0, 0), "cm")), ncol=1, align="hv")
 ```
 
 ## Introduction
@@ -239,12 +244,13 @@ DI_pies_2018<-plot_grid(remove_geom(us_map, "label") + geom_scatterpie(data=filt
 - Climate change may have unpredictable effects on growing seasons
 - Invasive species provide natural experiments for rapid adaptation
 - Aedes albopictus worldwide spread: diapause played a role 
-- What is the continuing role of diapause in light of environmental change, continuing introductions/admixture, 
+- What is the continuing role of diapause in light of environmental change, continuing introductions, competing selective pressures? 
+- We recapitulated 2008 CPP study
 
 ## Methods
 
 ### Mosquito population sampling and rearing
-Mosquito populations were sampled in the eastern USA and Japan in 2018, at latitudes ranging from (Fig 1). Sampling locations are described in Table 1. Locations in the US were largely identical to locations sampled in 2008. (More details about field sampling.) At least 50 male and 50 female mosquitoes were used to initiate laboratory populations, except for SEN, which had X females and Y males. 
+Mosquito populations were sampled in the eastern USA and Japan in 2018, at latitudes ranging from `r min(pops$latitude)` to `r max(pops$latitude)`. Sampling locations are described in Table 1. Locations in the US were largely identical to locations sampled in 2008. [More details about field sampling.] At least 50 male and 50 female mosquitoes were used to initiate laboratory populations, except for SEN, which had X females and Y males. 
 
 ```{r table1, echo=FALSE}
 kable(filter(pops, only_2008=="n")[,1:5], col.names=c("Population", "City", "Latitude", "Longitude", "Country"), caption="Table 1: 2018 Sampling Locations")
@@ -257,29 +263,57 @@ To determine the critical photoperiod of each population, the following general 
 
 Due to the large number of populations and photoperiods, the experiment was conducted in two blocks. Each block contained half of the populations from each country; populations across the full range of latitudes were interspersed between the blocks. At beginning of each block, eggs were hatched by submerging oviposition papers in water with larval food for two days. Larvae were distributed among X 15 cm petri dishes containing 90 ml of a mixture of distilled water and larval food (5 L of water to 10 mL of food slurry) at a density of 30-40 larvae per dish. Larvae were transferred to clean dishes containing fresh water/food mixture three times a week until pupation. Larvae were kept in the controlled temperature room at 21 degrees, 80 percent humidity and 16:8 hours light:dark until they produced pupae.
 
-Pupae from each population were collected, pooled across dishes, and haphazardly distributed amongst thirteen 1.5 L adult cages, corresponding to 12 photoperiod cabinets and an additional short-day (8h light) incubator. The total number of pupae added to each cage ranged from X to Y; subsequent pupal and adult mortality was not monitored. Approximately one week after the last pupae were added, cages were blood-fed, and a dark oviposition cup half-filled with water and lined with unbleached paper towel was added to each cage. Oviposition papers were collected 5-7 days after blood-feeding and replaced every 2-3 days; a total of four oviposition papers were collected from each cage. Several cages were fed again and an additional oviposition paper was collected; see Supplementary File 1 for details. Oviposition papers were dried gently and stored in the photoperiod cabinets for 10 to 21 days until the diapause scoring procedure.
+Pupae from each population were collected, pooled across dishes, and haphazardly distributed amongst thirteen 1.5 L adult cages, corresponding to 12 photoperiod cabinets and an additional short-day (8h light) incubator. The total number of pupae added to each cage ranged from X to Y; subsequent pupal and adult mortality was not monitored. Approximately one week after the last pupae were added, cages were blood-fed, and a dark oviposition cup half-filled with water and lined with unbleached paper towel was added to each cage. Oviposition papers were collected 5-7 days after blood-feeding and replaced every 2-3 days; a total of four oviposition papers were collected from each cage. Several cages were fed again and an additional oviposition paper was collected; see Supplementary File 1 for details. Oviposition papers were dried gently and stored in the photoperiod cabinets for 10 to 21 days until the diapause scoring procedure. 
 
 Oviposition papers were trimmed to a ~2 cm strip surrounding what was the waterline in the oviposition cup; this zone generally contained the vast majority of the eggs. On papers with few eggs, the paper was trimmed in such a way as to capture all eggs. On papers with very dense oviposition, the egg-containing strip was haphazardly subsampled further, to several hundred eggs as approximated by eye. Eggs were counted and egg papers were submerged in distilled water with several drops of larval food. Larvae that hatched were counted two days later and papers were re-dried. After 1-2 weeks, hatch was induced again and second installment hatched larvae were counted. Oviposition papers were then treated overnight with a bleach solution to clear the chorion of the remaining eggs. Eggs containing a pharate larva were scored as embryonated and in diapause. The total number of hatched larvae and embryonated eggs was considered the number of viable eggs. Oviposition papers in which viable eggs made up less than 60% or more than 100% of the eggs initially counted on the paper were excluded from further analysis. Analysis dates, subsampling and other detailed information about each oviposition paper can be found in Data Table 1.
 
 For each cage, the counts of larvae and embryos across all oviposition papers were pooled to calculate the diapause fraction: number of embryonated eggs divided by total number of viable eggs. The median total number of viable eggs per cage was `r median(DI_summary$total)` (range `r min(DI_summary$total)`-`r max(DI_summary$total)`). For the 8-hour photoperiod, each population had data from two cages: one in a photoperiod cabinet and one in a separate incubator. These data were pooled to calculate the diapause incidence value for the population, but used as separate data points in photoperiod response curves. 
 
+Photoperiod response data from 2008 and calculated CPP values from 1988 were obtained from Urbanski et al 2012 data files (doi:10.5061/dryad.68277435).
+
 ### Statistical analysis
-Critical photoperiod was calculated from photoperiod response curves as ED50 using a five-parameter generalized log-logistic model in the R (3.6.0) package drc (3.0.1). Effects of latitude, country and year (2008 vs. 2018) on CPP and on DI were analyzed with linear models. Additional packages used for calculations, analysis and figures included tidyverse (1.2.1), maps, mapdata, scatterpie…(update package list as figures come together).
+Critical photoperiod was calculated from photoperiod response curves (Figure S1) as ED50 using a five-parameter generalized log-logistic model in the R (3.6.0) package drc (`r packageVersion("drc")`). Effects of latitude, country and year (2008 vs. 2018) on CPP and on DI were analyzed with linear models. Additional packages used for calculations, analysis and figures included tidyverse (`r packageVersion("tidyverse")`), maps (`r packageVersion("maps")`), mapdata (`r packageVersion("mapdata")`), scatterpie (`r packageVersion("scatterpie")`)…[update package list as figures come together].
 
 ## Results
 
-Latitude-specific diapause incidence (the fraction of diapausing eggs produced under unambiguous short-day conditions) did not significantly differ between 2008 and 2018 in Japan or the US (Figure 1, Table 2). Diapause incidence was high (generally greater than 90%) at latitudes above ~32.5 degrees in both countries (Figure 2A). Substantial fractions of constitutively non-diapausing eggs were observed in populations south of South Carolina in the US and in Okinawa in Japan. Diapause incidence followed a latitudinal cline in the US, but a cline could not be observed in Japan due to absence of land to sample between Okinawa and Kagoshima. In the limited number of southern populations that could be compared between the US and Japan, latitude-specific diapause incidence appeared to be lower in the US (Figure 2B).
+Latitude-specific diapause incidence (the fraction of diapausing eggs produced under unambiguous short-day conditions) did not significantly differ between 2008 and 2018 in Japan or the US (Figure 1, Table 2).  Diapause incidence was high (generally greater than 90%) at latitudes north of ~32.5 degrees in both countries (Figure 2A). Substantial fractions of constitutively non-diapausing eggs were observed in populations south of South Carolina in the US and in Okinawa in Japan. Diapause incidence followed a latitudinal cline in the US, but a cline could not be observed in Japan due to absence of land to sample between Okinawa and Kagoshima. In the limited number of southern populations that could be compared between the US and Japan, latitude-specific diapause incidence appeared to be lower in the US (Figure 2B).
 
-```{r fig1, fig.cap="Figure 1: Diapause incidence in Japan and US in 2008 and 2018", echo=FALSE}
+```{r fig1, fig.pos="H", fig.cap="Figure 1: Diapause incidence in Japan and US in 2008 and 2018", echo=FALSE}
 incidence_lat_year_plot
 ```
+
 
 ```{r table2, echo=FALSE}
 kable(anova(dimodel), digits=3, caption="Table 2")
 ```
 
+
 ```{r fig2, fig.cap="Figure 2: Diapause incidence (2018) by country. Black sections of pie charts represent diapausing fraction; white fractions represent non-diapausing. Blue points represent US diapause incidence; red points represent Japan.", echo=FALSE, message=FALSE}
 plot_grid(DI_pies_2018, country_DI_2018, ncol=2, labels="AUTO")
 ```
 
-As observed in 
+CPP values correlated strongly with latitude in the US and Japan. Latitudinal clines were nearly parallel to those observed in 2008 (Figure 3), as verified by the lack of a significant interaction term between year and latitude (Table 3). 
+
+```{r fig3, fig.cap="Figure 3: Critical photoperiod (CPP) as a function of latitude in the US and Japan in 1988, 2008, and 2018. Error bars represent standard errors of CPP estimates. Errors around 1988 CPP estimates are absent because experiment and calculations were conducted using different methods and raw data were not available.", echo=FALSE, message=FALSE}
+cpp_japan_us_years
+```
+
+
+```{r table3, echo=FALSE}
+kable(anova(cppmodel), caption="Table 3: Effects of latitude, country and year on critical photoperiod in 2008 and 2018.")
+```
+
+
+However, the intercepts of the latitudinal clines significantly differed between both the US and Japan, and between 2008 and 2018 (Figure 4). Latitude-specific CPP was higher in Japan than the US, and higher in 2018 compared to 2008. This implies earlier entry into diapause at the same latitude in Japan than in the US and earlier entry into diapause in the same locations in 2018 than in 2008. 
+
+```{r fig4, fig.cap="Figure 4: Shifts in critical photoperiod latitudinal clines. Lines represent linear regressions; dotted=2018, solid=2008.", echo=FALSE}
+cpp_08_18_shifts
+```
+
+
+
+## Supplementary Figures
+```{r figS1, fig.cap="Figure S1: Photoperiod response curves", echo=FALSE}
+DI_plot
+```
+
