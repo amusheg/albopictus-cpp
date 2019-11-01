@@ -24,7 +24,9 @@ devtools::install_github("dkahle/ggmap")
 install.packages("scatterpie")
 install.packages("ggedit")
 install.packages("ggrepel")
+install.packages("papeR")
 install.packages("cowplot")
+
 ```
 
 ```{r message=FALSE, echo=FALSE, include=FALSE}
