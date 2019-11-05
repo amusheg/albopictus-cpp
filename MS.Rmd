@@ -92,6 +92,8 @@ hist(DI_summary$total, main="Total number of viable eggs per cage")
 
 ```{r DI_plot, echo=FALSE, include=FALSE}
 #plot with DI at 8 h shown as TWO DIFFERENT points (corresponding to two cabinets)
+c("PBS", "FEM", "OAK", "JAC", "BRU", "ZIO", "FAY", "NVA", "WAV", "MAN", "BER", "NEW", "OKI", "TAN", "KAG", "YAT", "SAG", "SHI", "YAM", "HIR", "KYO", "TAK", "TOK", "UTS", "KAN", "KHO", "AIZ", "NIG", "SEN", "SAK")
+DI_summary$pop<-factor(DI_summary$pop, levels=c("PBS", "FEM", "OAK", "JAC", "BRU", "ZIO", "FAY", "NVA", "WAV", "MAN", "BER", "NEW", "OKI", "TAN", "KAG", "YAT", "SAG", "SHI", "YAM", "HIR", "KYO", "TAK", "TOK", "UTS", "KAN", "KHO", "AIZ", "NIG", "SEN", "SAK"))
 DI_plot<-ggplot(DI_summary, aes(x=pp, y=DI, group=pop)) + geom_point() + facet_wrap(~pop)
   
 ```
@@ -345,6 +347,8 @@ DI_pies_2018
 ```
 
 ## Supplementary methods
+
+### Larval collection in Japan
 
 ### Larval rearing
 Larvae were fed a slurry of 40 g frozen brine shrimp and 120 g dog food homogenized in 1 L of distilled water. Larvae were initially raised in plastic Sterilite storage containers containing 1.5 L of distilled water, for ease of bulk rearing. Every Monday-Wednesday-Friday (MWF), the water in each container was removed by straining through a net and replaced with fresh distilled water; each container was fed approximately 1.5 ml of larval food slurry. Containers were covered with a fine mesh and kept at 21C, 80% humidity, and 16:8 L:D photoperiod. Starting with the generation prior to the one used in the experiment, larvae were reared in 15 cm petri dishes, as in Urbanski et al 2012. The pre-experiment generation was fed ~0.5-0.6 ml larval food per dish, while the experimental generation had food/water concentrations as described in the main manuscript. Every MWF, larvae were transferred to clean petri dishes with a pipette and had fresh food/water added. When removing pupae substantially reduced the density of larvae, the remaining larvae were consolidated into fewer dishes. 
