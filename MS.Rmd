@@ -373,4 +373,16 @@ DI_plot
 DI_pies_2018
 ```
 
+```{r figs_for_poster, include=FALSE, echo=FALSE}
+ggplot(filter(cpp_2, year!=1988), aes(x=lat, y=Estimate, color=country, shape=year)) + 
+     geom_point(size=3) + scale_color_manual(values=c("red", "blue")) +
+     stat_smooth(method=lm, se=FALSE, aes(linetype=year)) + scale_linetype_manual(values=c("dotted","solid")) + theme_bw() + theme(legend.position=c(.8,.25), text=element_text(size=24)) + xlab("Latitude") + ylab("Critical photoperiod")
+
+remove_geom(us_map, "label") %>% remove_geom("point") + ylim(24,48) + geom_scatterpie(data=filter(DI_info, country=="US", year=="2018"), aes(x=longitude, y=latitude, r=.7, alpha=0.95), cols=c("Diapause", "Nondiapause")) + scale_fill_manual(values=c("black","white")) + theme(text=element_text(size=24), axis.title.x=element_blank(), axis.text.x=element_blank(), axis.ticks.x=element_blank(), axis.title.y=element_blank(), legend.position="none", plot.margin = unit(c(0, 0, 0, 0), "null"))
+
+remove_geom(japan_map, "label") %>% remove_geom("point") + ylim(24,48) + geom_scatterpie(data=filter(DI_info, country=="JP", year=="2018"), aes(x=longitude, y=latitude, r=.7, alpha=0.95), cols=c("Diapause", "Nondiapause")) + scale_fill_manual(values=c("black","white")) + theme(text=element_text(size=24), axis.title.x=element_blank(), axis.text.x=element_blank(), axis.ticks.x=element_blank(), axis.title.y=element_blank(), legend.position="none", plot.margin = unit(c(0, 0, 0, 0), "null")) 
+
+```
+
+
 # References
