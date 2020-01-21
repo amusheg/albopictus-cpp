@@ -75,7 +75,7 @@ blockAB_filtered <- filter(blockAB, yield<=1) %>% filter(yield>=0.6)
 DI_summarize <- function(blockAB) {
 DI_summary <- blockAB %>% 
   group_by(CageID) %>% 
-  summarise(pop=first(Population), pp=mean(Photoperiod), lat=mean(Lat), block=first(Block), country=first(Country), h1=sum(H1Count), h2=sum(H2Count), emb=sum(EmbryoCount)) %>%   filter(h1+h2+emb>100)
+  dplyr::summarise(pop=first(Population), pp=mean(Photoperiod), lat=mean(Lat), block=first(Block), country=first(Country), h1=sum(H1Count), h2=sum(H2Count), emb=sum(EmbryoCount)) %>%   filter(h1+h2+emb>100)
 DI_summary$total<-DI_summary$h1+DI_summary$h2+DI_summary$emb
 DI_summary$DI<-DI_summary$emb/DI_summary$total
 return(DI_summary)
@@ -138,7 +138,7 @@ cpp_2018<-data.frame(ED(d.model.fit, 50))
 cpp_2018<-rownames_to_column(cpp_2018, var="pop") 
 cpp_2018$pop<-str_sub(cpp_2018$pop,3,5)
 popdata_2018<-DI_summary %>% group_by(pop) %>% 
-  summarize(lat=first(lat), country=first(country))
+  dplyr::summarize(lat=first(lat), country=first(country))
 cpp_2018<-right_join(cpp_2018, popdata_2018, by="pop")
 cpp_2018$year<-rep("2018", nrow(cpp_2018))
 colnames(cpp_2018)[colnames(cpp_2018)=="Std..Error"] <- "StdError"
@@ -146,7 +146,7 @@ cpp_2008<-data.frame(ED(d.model.fit.2008, 50)) %>% rownames_to_column(var="pop")
 cpp_2008$pop<-str_sub(cpp_2008$pop,3,5)
 colnames(cpp_2008)[colnames(cpp_2008)=="Std..Error"] <- "StdError"
 popdata_2008<-DI_summary_2008 %>% group_by(pop) %>% 
-  summarize(country=first(country), lat=first(lat), year=first(year)) 
+  dplyr::summarize(country=first(country), lat=first(lat), year=first(year)) 
 cpp_2008<-right_join(cpp_2008, popdata_2008, by="pop")
 cpp_1988<-data.frame(read.csv("CPP_1988.csv")) 
 cpp_1988$pop<-na_if(cpp_1988$pop, "NA")
@@ -187,7 +187,7 @@ cpp_08_18_shifts<-ggplot(filter(cpp_2, year!=1988), aes(x=lat, y=Estimate, color
 ```{r incidence_lat_year, echo=FALSE, include=FALSE}
 DI_short_2008<-filter(DI_summary_2008, photoperiod==8)
 DI_short_2018<-filter(DI_summary, pp==8) %>% group_by(pop) %>% 
-  summarize(country=first(country), lat=first(lat), photoperiod=first(pp), emb=sum(emb), total=sum(total))
+  dplyr::summarize(country=first(country), lat=first(lat), photoperiod=first(pp), emb=sum(emb), total=sum(total))
 DI_short_2018$DI<-DI_short_2018$emb/DI_short_2018$total
 DI_short_2018<-DI_short_2018[,c(1:4,7)] 
 DI_short_2018$year<-rep("2018",nrow(DI_short_2018))
@@ -375,7 +375,7 @@ DI_pies_2018
 
 ```{r figs_for_poster, include=FALSE, echo=FALSE}
 ggplot(filter(cpp_2, year!=1988), aes(x=lat, y=Estimate, color=country, shape=year)) + 
-     geom_point(size=3) + scale_color_manual(values=c("red", "blue")) +
+     geom_point(size=6) + scale_color_manual(values=c("red", "blue")) +
      stat_smooth(method=lm, se=FALSE, aes(linetype=year)) + scale_linetype_manual(values=c("dotted","solid")) + theme_bw() + theme(legend.position=c(.8,.25), text=element_text(size=24)) + xlab("Latitude") + ylab("Critical photoperiod")
 
 remove_geom(us_map, "label") %>% remove_geom("point") + ylim(24,48) + geom_scatterpie(data=filter(DI_info, country=="US", year=="2018"), aes(x=longitude, y=latitude, r=.7, alpha=0.95), cols=c("Diapause", "Nondiapause")) + scale_fill_manual(values=c("black","white")) + theme(text=element_text(size=24), axis.title.x=element_blank(), axis.text.x=element_blank(), axis.ticks.x=element_blank(), axis.title.y=element_blank(), legend.position="none", plot.margin = unit(c(0, 0, 0, 0), "null"))
@@ -383,6 +383,8 @@ remove_geom(us_map, "label") %>% remove_geom("point") + ylim(24,48) + geom_scatt
 remove_geom(japan_map, "label") %>% remove_geom("point") + ylim(24,48) + geom_scatterpie(data=filter(DI_info, country=="JP", year=="2018"), aes(x=longitude, y=latitude, r=.7, alpha=0.95), cols=c("Diapause", "Nondiapause")) + scale_fill_manual(values=c("black","white")) + theme(text=element_text(size=24), axis.title.x=element_blank(), axis.text.x=element_blank(), axis.ticks.x=element_blank(), axis.title.y=element_blank(), legend.position="none", plot.margin = unit(c(0, 0, 0, 0), "null")) 
 
 ```
+
+
 
 
 # References
