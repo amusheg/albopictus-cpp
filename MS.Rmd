@@ -26,7 +26,6 @@ install.packages("ggedit")
 install.packages("ggrepel")
 install.packages("papeR")
 install.packages("cowplot")
-
 ```
 
 ```{r message=FALSE, echo=FALSE, include=FALSE}
@@ -94,7 +93,7 @@ hist(DI_summary$total, main="Total number of viable eggs per cage")
 #plot with DI at 8 h shown as TWO DIFFERENT points (corresponding to two cabinets)
 c("PBS", "FEM", "OAK", "JAC", "BRU", "ZIO", "FAY", "NVA", "WAV", "MAN", "BER", "NEW", "OKI", "TAN", "KAG", "YAT", "SAG", "SHI", "YAM", "HIR", "KYO", "TAK", "TOK", "UTS", "KAN", "KHO", "AIZ", "NIG", "SEN", "SAK")
 DI_summary$pop<-factor(DI_summary$pop, levels=c("PBS", "FEM", "OAK", "JAC", "BRU", "ZIO", "FAY", "NVA", "WAV", "MAN", "BER", "NEW", "OKI", "TAN", "KAG", "YAT", "SAG", "SHI", "YAM", "HIR", "KYO", "TAK", "TOK", "UTS", "KAN", "KHO", "AIZ", "NIG", "SEN", "SAK"))
-DI_plot<-ggplot(DI_summary, aes(x=pp, y=DI, group=pop)) + geom_point() + facet_wrap(~pop) + theme_bw() + xlab("Photoperiod (hours)") + ylab("Dipause incidence")
+DI_plot<-ggplot(DI_summary, aes(x=pp, y=DI, group=pop)) + geom_point() + facet_wrap(~fct_reorder(pop, lat)) + theme_bw() + xlab("Photoperiod (hours)") + ylab("Dipause incidence")
   
 ```
 
@@ -115,10 +114,6 @@ summary(d.model.fit)
 # estimate the 50% intercept
 ED(d.model.fit, 50)
 cpp_values<-data.frame(ED(d.model.fit, 50))
-```
-
-```{r}
-
 ```
 
 ```{r CPP_calc_2008, echo=FALSE, include=FALSE}
@@ -168,7 +163,6 @@ cpp_japan_us_years<-ggplot(cpp_2, aes(x=lat, y=Estimate, fill=year, color=year))
 cppmodel<-lm(Estimate~lat*country*year, data=filter(cpp_2, year!=1988))
 cppmodel_result<-data.frame(anova(cppmodel))
 ```
-
 
 ```{r, echo=FALSE, include=FALSE}
 ggplot(cpp_2, aes(x=lat, y=Estimate, color=country)) + 
@@ -384,6 +378,8 @@ remove_geom(japan_map, "label") %>% remove_geom("point") + ylim(24,48) + geom_sc
 
 ```
 
+```{r}
+```
 
 
 
