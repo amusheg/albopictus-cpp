@@ -94,8 +94,7 @@ hist(DI_summary$total, main="Total number of viable eggs per cage")
 #plot with DI at 8 h shown as TWO DIFFERENT points (corresponding to two cabinets)
 c("PBS", "FEM", "OAK", "JAC", "BRU", "ZIO", "FAY", "NVA", "WAV", "MAN", "BER", "NEW", "OKI", "TAN", "KAG", "YAT", "SAG", "SHI", "YAM", "HIR", "KYO", "TAK", "TOK", "UTS", "KAN", "KHO", "AIZ", "NIG", "SEN", "SAK")
 DI_summary$pop<-factor(DI_summary$pop, levels=c("PBS", "FEM", "OAK", "JAC", "BRU", "ZIO", "FAY", "NVA", "WAV", "MAN", "BER", "NEW", "OKI", "TAN", "KAG", "YAT", "SAG", "SHI", "YAM", "HIR", "KYO", "TAK", "TOK", "UTS", "KAN", "KHO", "AIZ", "NIG", "SEN", "SAK"))
-DI_plot<-ggplot(DI_summary, aes(x=pp, y=DI, group=pop)) + geom_point() + facet_wrap(~fct_reorder(pop, lat)) + theme_bw() + xlab("Photoperiod (hours)") + ylab("Dipause incidence")
-  
+DI_plot<-ggplot(DI_summary, aes(x=pp, y=DI, group=pop)) + geom_point() + facet_wrap(~fct_reorder(pop, lat)) + theme_bw() + xlab("Photoperiod (hours)") + ylab("Dipause incidence") 
 ```
 
 ```{r incidence_lat, echo=FALSE, include=FALSE}
@@ -115,6 +114,8 @@ summary(d.model.fit)
 # estimate the 50% intercept
 ED(d.model.fit, 50)
 cpp_values<-data.frame(ED(d.model.fit, 50))
+
+pm<-drc:::predict.drc(d.model.fit, type="response")
 ```
 
 ```{r CPP_calc_2008, echo=FALSE, include=FALSE}
@@ -367,5 +368,30 @@ ggplot(filter(cpp_2, year!=1988), aes(x=lat, y=Estimate, color=country, shape=ye
 remove_geom(us_map, "label") %>% remove_geom("point") + ylim(24,48) + geom_scatterpie(data=filter(DI_info, country=="US", year=="2018"), aes(x=longitude, y=latitude, r=.7, alpha=0.95), cols=c("Diapause", "Nondiapause")) + scale_fill_manual(values=c("black","white")) + theme(text=element_text(size=24), axis.title.x=element_blank(), axis.text.x=element_blank(), axis.ticks.x=element_blank(), axis.title.y=element_blank(), legend.position="none", plot.margin = unit(c(0, 0, 0, 0), "null"))
 remove_geom(japan_map, "label") %>% remove_geom("point") + ylim(24,48) + geom_scatterpie(data=filter(DI_info, country=="JP", year=="2018"), aes(x=longitude, y=latitude, r=.7, alpha=0.95), cols=c("Diapause", "Nondiapause")) + scale_fill_manual(values=c("black","white")) + theme(text=element_text(size=24), axis.title.x=element_blank(), axis.text.x=element_blank(), axis.ticks.x=element_blank(), axis.title.y=element_blank(), legend.position="none", plot.margin = unit(c(0, 0, 0, 0), "null")) 
 ```
+
+```{r}
+#Dose response curve plot from Jen
+cpp<-read.table("CPP.csv", header=TRUE, sep=",")
+cpp
+
+fm1<-cbind(hatched, nothatched)~photoperiod
+cppmodel<-glm(fm1, data=cpp, family=binomial())
+
+summary(cppmodel)
+
+fitteddata1<-predict(cppmodel,type="response")
+fitteddata1
+
+plot(cpp$photoperiod, fitteddata1, ylab="Probability of hatching",
+     xlab="photoperiod", ylim=c(0,1))
+     lines(cpp$photoperiod,fitteddata1, lty=1)
+y<-cpp$hatched/(cpp$hatched+cpp$nothatched)
+text(cpp$photoperiod,y)
+hours<-
+-(cppmodel$coefficients["(Intercept)"])/cppmodel$coefficients["photoperiod"]
+hours
+
+```
+
 
 # References
