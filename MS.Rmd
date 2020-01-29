@@ -1,30 +1,4 @@
 
-Skip to content
-Pull requests
-Issues
-Marketplace
-Explore
-@amusheg
-amusheg /
-albopictus-cpp
-
-1
-0
-
-    0
-
-Code
-Issues 0
-Pull requests 0
-Actions
-Projects 0
-Wiki
-Security
-Insights
-Settings
-albopictus-cpp/MS.Rmd
-Alexandra Mushegian Ready for MS b6284d3 4 days ago
-386 lines (303 sloc) 30.8 KB
 ---
 title: "Ae. albopictus CPP manuscript"
 header-includes: #allows you to add in your own Latex packages
@@ -319,6 +293,10 @@ incidence_lat_year_plot
 ```{r fig.cap="Figure 2B: Diapause incidence by country and year. Lines represent locally estimated scatterplot smoothing (LOESS). Solid lines, 2018 data; dotted lines, 2008 data.", echo=FALSE, message=FALSE}
 #country_DI
 ggplot(filter(DI_short_2, year!=1988), aes(x=lat, y=DI, color=country, shape=year)) + scale_color_manual(values=c("red","blue")) + geom_point(size=3) + theme_bw() + theme(legend.position=c(0.9,0.3)) + stat_smooth(aes(linetype=year), se=FALSE) + scale_linetype_manual(values=c("dotted","solid")) + xlab("Latitude") + ylab("Short-day diapause incidence")
+
+ggplot(filter(DI_short_2, year!=1988), aes(x=lat, y=DI, fill=country, shape=year)) + scale_fill_manual(values=c("black","gray")) + 
+scale_shape_manual(values=c(21,24)) + geom_point(size=3) + theme_bw() + theme(legend.position=c(0.9,0.3)) + stat_smooth(aes(linetype=year, color=country), se=FALSE) + scale_color_manual(values=c("black","gray")) + scale_linetype_manual(values=c("dotted","solid")) + xlab("Latitude") + ylab("Short-day diapause incidence")
+
 ```
 
 ```{r echo=FALSE}
@@ -354,7 +332,7 @@ The custom-built photoperiod cabinets were the same ones used in Urbanski et al 
 Adult cages were fed from a human host over a three-day period; feeding days were randomly assigned by photoperiod cabinet. Collected oviposition papers were stored in 10 cm petri dishes inside humidified containers in the photoperiod cabinet in which they originated. In the second block of the experiment, two cages produced less than 200 eggs after the initial blood meal, and the cages in the cabinets with 14.5 hours and 14.25 hours of light had large numbers of larvae that hatched on the wet oviposition paper on the first egg collection day due to incomplete drying and thus could not be accurately counted. These 24 cages were offered a second blood meal and an additional oviposition paper was collected a week later. Papers with eggs produced after a second blood meal have a Paper ID ending in “-5” in Data Table 1.
 
 ### Diapause determination
-Oviposition papers were trimmed to a ~2 cm strip surrounding the former location of the waterline in the oviposition cup; this zone generally contained the vast majority of the eggs. On oviposition papers with few eggs, the paper was trimmed in such a way as to capture all of them. On papers with very dense oviposition, the egg-containing strip was haphazardly subsampled further, to several hundred eggs as approximated by eye. 
+Oviposition papers were trimmed to a ~2 cm strip surrounding the former location of the waterline in the oviposition cup; this zone generally contained the vast majority of the eggs. On oviposition papers with few eggs, the paper was trimmed in such a way as to capture all of them. On papers with very dense oviposition, the egg-containing strip was haphazardly subsampled further, to several hundred eggs as approximated by eye.
 
 After eggs were bleached, presence of pharate larvae was determined using the diagnostic criteria of visible eye spots and abdominal segmentation. On some oviposition papers, larvae “hatched” out of the eggs after the bleach solution was added; these were scored as embryonated diapause eggs because they appeared to be morphologically normal and did not hatch when induced with standard hatching cues twice. 
 
