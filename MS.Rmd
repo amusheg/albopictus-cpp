@@ -1,30 +1,4 @@
 
-Skip to content
-Pull requests
-Issues
-Marketplace
-Explore
-@amusheg
-amusheg /
-albopictus-cpp
-
-1
-0
-
-    0
-
-Code
-Issues 0
-Pull requests 0
-Actions
-Projects 0
-Wiki
-Security
-Insights
-Settings
-albopictus-cpp/MS.Rmd
-Alexandra Mushegian Ready for MS b6284d3 4 days ago
-386 lines (303 sloc) 30.8 KB
 ---
 title: "Ae. albopictus CPP manuscript"
 header-includes: #allows you to add in your own Latex packages
@@ -203,6 +177,24 @@ cpp_08_18_shifts<-ggplot(filter(cpp_2, year!=1988), aes(x=lat, y=Estimate, color
   geom_point(size=3) + scale_color_manual(values=c("red", "blue")) +
   stat_smooth(method=lm, se=FALSE, aes(linetype=year)) + scale_linetype_manual(values=c("dotted","solid")) + theme_bw() + theme(legend.position=c(.8,.25)) + xlab("Latitude") + ylab("Critical photoperiod")
   # + geom_errorbar(aes(ymin=Estimate-StdError, ymax=Estimate+StdError), na.rm=TRUE) 
+
+ggplot(filter(cpp_2, year!=1988), aes(x=lat, y=Estimate, fill=country, shape=year)) + 
+  geom_point(size=3) + scale_fill_manual(values=c("black", "gray"), name="Country") + scale_shape_manual(values=c(21,24), name="Year") +
+  stat_smooth(method=lm, se=FALSE, aes(linetype=year, color=country)) + scale_linetype_manual(values=c("dotted","solid"), name="Year") + 
+  scale_color_manual(values=c("black","gray"), name="Country") +
+  guides(fill=guide_legend(override.aes=list(shape=22)), linetype=guide_legend(override.aes=list(color="black")),
+  color=guide_legend(override.aes=list(linetype=0)), color=guide_legend(override.aes=list(linetype=0)), linetype=guide_legend(legend.key.width=unit(3,"line"))) +
+  theme_bw() + theme(legend.position=c(.8,.25), text=element_text(size=14)) + xlab("Latitude") + ylab("Critical photoperiod (h)")
+
+ggplot(filter(cpp_2, year!=1988), aes(x=lat, y=Estimate, fill=country)) + 
+geom_point(size=3, shape=21) + scale_fill_manual(values=c("black", "gray"), name="Country") + stat_smooth(method=lm, aes(color=country)) + scale_color_manual(values=c("black","gray"), name="Country") +
+  facet_grid(~year) +
+  guides(fill=guide_legend(override.aes=list(shape=21))) +
+  theme_bw() + theme(legend.position=c(.8,.25), text=element_text(size=14)) + 
+  xlab("Latitude") + ylab("Critical photoperiod (h)")
+
+
+
 ```
 
 ```{r incidence_lat_year, echo=FALSE, include=FALSE}
@@ -268,6 +260,19 @@ jp_DI_pies<-remove_geom(japan_map, "label") + geom_scatterpie(data=filter(DI_inf
 DI_pies_2018<-plot_grid(remove_geom(us_map, "label") %>% remove_geom("point") + ylim(24,48) + geom_scatterpie(data=filter(DI_info, country=="US", year=="2018"), aes(x=longitude, y=latitude, r=.7, alpha=0.95), cols=c("Diapause", "Nondiapause")) + scale_fill_manual(values=c("black","white")) + theme(axis.title.x=element_blank(), axis.text.x=element_blank(), axis.ticks.x=element_blank(), axis.title.y=element_blank(), legend.position="none", plot.margin = unit(c(0, 0, 0, 0), "null")), 
                         
 remove_geom(japan_map, "label") %>% remove_geom("point") + ylim(24,48) + geom_scatterpie(data=filter(DI_info, country=="JP", year=="2018"), aes(x=longitude, y=latitude, r=.7, alpha=0.95), cols=c("Diapause", "Nondiapause")) + scale_fill_manual(values=c("black","white")) + theme(axis.title.x=element_blank(), axis.text.x=element_blank(), axis.ticks.x=element_blank(), axis.title.y=element_blank(), legend.position="none", plot.margin = unit(c(0, 0, 0, 0), "null")), ncol=2, align="hv")
+
+
+#bw locations map
+us_map_bw<-ggplot() + geom_polygon(data = usa, aes(x=long, y = lat, group=group), fill=NA, color="black") + 
+  coord_fixed(1.3) + geom_point(data = filter(pops, country=="US"), aes(x = longitude, y = latitude), size = 1) + xlim(c(-87, -65)) + ylim(c(24,48)) +
+  geom_label(data=filter(pops, country=="US"), aes(x=longitude, y=latitude, label=pop), hjust=0, label.padding=unit(0.1, "lines")) + theme_bw() + xlab("") + ylab("Latitude")
+
+japan_map_bw<-ggplot() + geom_polygon(data = jp, aes(x=long, y = lat, group=group), fill=NA, color="black") + 
+  coord_fixed(1.3) + geom_point(data = filter(pops, country=="JP", only_2008=="n"), aes(x = longitude, y = latitude), size = 1)  + xlim(c(125, 147)) + ylim(c(24,48)) +
+  geom_label_repel(data=filter(pops, country=="JP", only_2008=="n"), aes(x=longitude, y=latitude, label=pop), hjust=0, label.padding=unit(0.1, "lines")) + theme_bw()  + xlab("") + ylab("")
+
+plot_grid(us_map_bw, japan_map_bw)
+
 ```
 
 ## Introduction
@@ -318,7 +323,10 @@ incidence_lat_year_plot
 
 ```{r fig.cap="Figure 2B: Diapause incidence by country and year. Lines represent locally estimated scatterplot smoothing (LOESS). Solid lines, 2018 data; dotted lines, 2008 data.", echo=FALSE, message=FALSE}
 #country_DI
-ggplot(filter(DI_short_2, year!=1988), aes(x=lat, y=DI, color=country, shape=year)) + scale_color_manual(values=c("red","blue")) + geom_point(size=3) + theme_bw() + theme(legend.position=c(0.9,0.3)) + stat_smooth(aes(linetype=year), se=FALSE) + scale_linetype_manual(values=c("dotted","solid")) + xlab("Latitude") + ylab("Short-day diapause incidence")
+country_DI_color<-ggplot(filter(DI_short_2, year!=1988), aes(x=lat, y=DI, color=country, shape=year)) + scale_color_manual(values=c("red","blue")) + geom_point(size=3) + theme_bw() + theme(legend.position=c(0.9,0.3)) + stat_smooth(aes(linetype=year), se=FALSE) + scale_linetype_manual(values=c("dotted","solid")) + xlab("Latitude") + ylab("Short-day diapause incidence")
+
+country_DI_bw<-ggplot(filter(DI_short_2, year!=1988), aes(x=lat, y=DI, fill=country, shape=year)) + scale_fill_manual(values=c("black","gray"), name="Country") + scale_shape_manual(values=c(21,24), name="Year") + geom_point(size=3) + theme_bw() + theme(legend.position=c(0.9,0.3), text=element_text(size=14)) + guides(fill = guide_legend(override.aes=list(shape=22))) + xlab("Latitude") + ylab("Short-day diapause incidence")
+
 ```
 
 ```{r echo=FALSE}
@@ -354,7 +362,7 @@ The custom-built photoperiod cabinets were the same ones used in Urbanski et al 
 Adult cages were fed from a human host over a three-day period; feeding days were randomly assigned by photoperiod cabinet. Collected oviposition papers were stored in 10 cm petri dishes inside humidified containers in the photoperiod cabinet in which they originated. In the second block of the experiment, two cages produced less than 200 eggs after the initial blood meal, and the cages in the cabinets with 14.5 hours and 14.25 hours of light had large numbers of larvae that hatched on the wet oviposition paper on the first egg collection day due to incomplete drying and thus could not be accurately counted. These 24 cages were offered a second blood meal and an additional oviposition paper was collected a week later. Papers with eggs produced after a second blood meal have a Paper ID ending in “-5” in Data Table 1.
 
 ### Diapause determination
-Oviposition papers were trimmed to a ~2 cm strip surrounding the former location of the waterline in the oviposition cup; this zone generally contained the vast majority of the eggs. On oviposition papers with few eggs, the paper was trimmed in such a way as to capture all of them. On papers with very dense oviposition, the egg-containing strip was haphazardly subsampled further, to several hundred eggs as approximated by eye. 
+Oviposition papers were trimmed to a ~2 cm strip surrounding the former location of the waterline in the oviposition cup; this zone generally contained the vast majority of the eggs. On oviposition papers with few eggs, the paper was trimmed in such a way as to capture all of them. On papers with very dense oviposition, the egg-containing strip was haphazardly subsampled further, to several hundred eggs as approximated by eye.
 
 After eggs were bleached, presence of pharate larvae was determined using the diagnostic criteria of visible eye spots and abdominal segmentation. On some oviposition papers, larvae “hatched” out of the eggs after the bleach solution was added; these were scored as embryonated diapause eggs because they appeared to be morphologically normal and did not hatch when induced with standard hatching cues twice. 
 
@@ -362,6 +370,7 @@ The total number of hatched larvae and embryos could differ from the number of e
 
 ```{r fig.cap="Figure S1: Discrepancies between initial egg counts and final calculated egg counts on oviposition papers.", echo=FALSE}
 plot(blockAB$yield ~ blockAB$TotalLarvaeEmbryos, xlab="Number of viable eggs on oviposition paper", ylab="Viable eggs/initial egg count on paper")
+ggplot(blockAB, aes(x=TotalLarvaeEmbryos, y=yield)) + geom_point() + xlab("Number of viable eggs on oviposition paper") + ylab("Viable eggs/initial egg count on paper") + theme_bw()
 ```
 
 ```{r fig.cap="Figure S2. Critical photoperiod calculated with and without filtering oviposition papers based on criteria described. Line represents x=y. Outlier point corresponds to population PBS.", echo=FALSE}

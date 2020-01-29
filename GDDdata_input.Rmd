@@ -12,6 +12,8 @@ Naresh and Leslie compiled some additional climate parameters: monthly mean maxi
 
 ```{r include=FALSE}
 library(tidyverse)
+library(drc)
+library(cowplot)
 ```
 
 # GDD deadline data
@@ -32,8 +34,8 @@ ggplot(gdd400_jp, aes(x=year, y=gdd400, color=pop)) + geom_point() + geom_line()
 ```{r}
 #adding latitudes
 locations<-read.csv("mapping_pops_cpp_expt.csv")
-gdd400_us<-left_join(gdd400_us, select(locations, pop, latitude, country, only_2008), by=c("pop"))
-gdd400_jp<-left_join(gdd400_jp, select(locations, pop, latitude, country, only_2008), by=c("pop"))
+gdd400_us<-left_join(gdd400_us, dplyr::select(locations, pop, latitude, country, only_2008), by=c("pop"))
+gdd400_jp<-left_join(gdd400_jp, dplyr::select(locations, pop, latitude, country, only_2008), by=c("pop"))
 gdd400_all<-rbind(gdd400_us, gdd400_jp)
 gdd400_all$pop<-as.factor(gdd400_all$pop)
 gdd400_all<-mutate(gdd400_all, interval=case_when(year<=2017 & year>=2008 ~ 'y2008-2017',
@@ -56,6 +58,10 @@ ggplot(filter(gdd400_all, year<2008, only_2008=="n"), aes(x=latitude, y=gdd400, 
 ggplot(filter(gdd400_all, year>=2008, only_2008=="n"), aes(x=latitude, y=gdd400, color=country)) + geom_point() + facet_wrap(~year)
 
 ```
+```{r}
+ggplot(filter(gdd400_all, only_2008=="n", year!=2018), aes(x=latitude, y=gdd400, color=country)) + scale_color_manual(values=c("black", "gray"), name="Country") + geom_point() + facet_wrap(~year) + xlab("Latitude") + ylab("GDD Deadline (ordinal day)") + theme_bw() 
+
+```
 
 
 ```{r}
@@ -75,6 +81,7 @@ ggplot(filter(gdd400_all, country=="JP", interval!="NA", only_2008=="n"), aes(x=
 
 ## GDD deadlines including 2008 Japan sites
 
+
 ```{r}
 ggplot(filter(gdd400_all, year %in% c(2005, 2006, 2007, 2015, 2016, 2017)), aes(x=latitude, y=gdd400, color=country)) + geom_point() + facet_wrap(~year)
 ```
@@ -92,7 +99,7 @@ tmin_us<-read.csv("AvgTmin_US.csv", check.names=FALSE) %>% gather(year, Tmin, "1
 #In order to look at winter temperatures, need to combine Nov/Dec with Jan/Feb of the following year. January and February are reassigned in this table to the previous year to create seasonal years
 tmin_us$year<-as.numeric(tmin_us$year) 
 tmin_us$seasonalyear<-if_else(tmin_us$month %in% c("Jan","Feb"), tmin_us$year-1, tmin_us$year)
-minwintertemp_us<-filter(tmin_us, month %in% c("Nov","Dec","Jan","Feb")) %>% group_by(pop, seasonalyear) %>% summarise(wintermin=min(Tmin), wintermonths_sd=sd(Tmin)) %>% filter(!(seasonalyear %in% c(1997,2018)))
+minwintertemp_us<-filter(tmin_us, month %in% c("Nov","Dec","Jan","Feb")) %>% group_by(pop, seasonalyear) %>% dplyr::summarise(wintermin=min(Tmin), wintermonths_sd=sd(Tmin)) %>% filter(!(seasonalyear %in% c(1997,2018)))
 ggplot(minwintertemp_us, aes(x=seasonalyear, y=wintermin, color=pop)) + geom_point() + geom_line() + geom_vline(xintercept=c(2008,2018)) 
 ```
 ```{r}
@@ -105,7 +112,7 @@ ggplot(minwintertemp_us, aes(x=seasonalyear, y=wintermonths_sd, color=pop)) + ge
 tmin_jp<-read.csv("AvgTmin_JP.csv", check.names=FALSE) %>% gather(year, Tmin, "1998":"2018", factor_key=FALSE)
 tmin_jp$year<-as.numeric(tmin_jp$year) 
 tmin_jp$seasonalyear<-if_else(tmin_jp$month %in% c("Jan","Feb"), tmin_jp$year-1, tmin_jp$year)
-minwintertemp_jp<-filter(tmin_jp, month %in% c("Nov","Dec","Jan","Feb")) %>% group_by(pop, seasonalyear) %>% summarise(wintermin=min(Tmin), wintermonths_sd=sd(Tmin)) %>% filter(!(seasonalyear %in% c(1997,2018)))
+minwintertemp_jp<-filter(tmin_jp, month %in% c("Nov","Dec","Jan","Feb")) %>% group_by(pop, seasonalyear) %>% dplyr::summarise(wintermin=min(Tmin), wintermonths_sd=sd(Tmin)) %>% filter(!(seasonalyear %in% c(1997,2018)))
 ggplot(minwintertemp_jp, aes(x=seasonalyear, y=wintermin, color=pop)) + geom_point() + geom_line() + geom_vline(xintercept=c(2008,2018))
 ```
 ```{r}
@@ -162,7 +169,7 @@ ggplot(filter(gdd400_all_new, year %in% c(2005,2015)), aes(x=latitude, y=winterm
 
 ```{r}
 #adding 2008 and 2018 CPP values to big table of yearly deadlines and winter temps
-cpp_year<-select(read.csv("cpp_calcs_filtered.csv"), pop, Estimate, year) %>% filter(year!="1988") %>% rename("CPP_YEAR"="year")
+cpp_year<-dplyr::select(read.csv("cpp_calcs_filtered.csv"), pop, Estimate, year) %>% filter(year!="1988") %>% rename("CPP_YEAR"="year")
 gdd400_all_new<-left_join(gdd400_all_new, cpp_year, by="pop")
 gdd400_all_new$CPP_YEAR<-as.factor(gdd400_all_new$CPP_YEAR)
 
@@ -172,8 +179,19 @@ gdd400_all_new$CPP_YEAR<-as.factor(gdd400_all_new$CPP_YEAR)
 
 ```{r}
 
-ggplot(filter(gdd400_all_new, year==2007, CPP_YEAR==2018), aes(x=gdd400, y=Estimate, color=country)) + geom_point() + stat_smooth(method=lm) 
+gdd_08 <- ggplot(filter(gdd400_all_new, year==2007, CPP_YEAR==2008), aes(x=gdd400, y=Estimate, fill=country)) + scale_fill_manual(values=c("black","gray"), name="Country") + geom_point(size=3, shape=21) + stat_smooth(method=lm, se=FALSE, aes(color=country)) + scale_color_manual(values=c("black","gray"), name="Country") +
+  theme_bw() + theme(legend.position="none", text=element_text(size=14)) +
+  xlab("GDD Deadline (ordinal day), 2007") + ylab("Critical photoperiod (h), 2008")
+
+gdd_18 <- ggplot(filter(gdd400_all_new, year==2017, CPP_YEAR==2018), aes(x=gdd400, y=Estimate, fill=country)) + scale_fill_manual(values=c("black","gray"), name="Country") + geom_point(size=3, shape=21) + stat_smooth(method=lm, se=FALSE, aes(color=country)) + scale_color_manual(values=c("black","gray"), name="Country") +
+theme_bw() + theme(legend.position=c(.8,.8), text=element_text(size=14)) +
+xlab("GDD Deadline (ordinal day), 2017") + ylab("Critical photoperiod (h), 2018")
+
+plot_grid(gdd_08, gdd_18, labels="AUTO")
+
 ```
+
+
 ```{r}
 ggplot(filter(gdd400_all_new, year==2007, CPP_YEAR==2018), aes(x=latitude, y=Estimate, color=country)) + geom_point() + stat_smooth(method=lm) 
 
@@ -187,8 +205,24 @@ ggplot(filter(gdd400_all_new, year %in% c(2007,2017)), aes(x=gdd400, y=Estimate,
 
 # Variability (SD) in winter coldness in 1998-2007 vs. 2008-2017
 
-```{r}
+```{r, include=FALSE}
 variation_summary<-filter(gdd400_all_new, interval!="NA", CPP_YEAR=="2018") %>% group_by(pop, interval) %>% dplyr::summarize(lat=mean(latitude), country=first(country), gdd400_sd=sd(gdd400), wintermin_sd=sd(wintermin), cpp_2018=mean(Estimate))
 ggplot(variation_summary, aes(x=lat, y=wintermin_sd, color=interval)) + geom_point() + facet_grid(~country)
+```
+
+# 2015 Diapause Incidence Field Trial
+
+```{r}
+field_data<-read.csv("DI_2015_FIELD.csv")
+field_data$WeekDate <- reorder(field_data$WeekDate, field_data$Week)
+ggplot(field_data, aes(x=WeekDate, y=DI, fill=Eggs)) + geom_point(size=3, shape=21) + scale_fill_manual(values=c("white","grey"), name="Mosquito Population") + theme_bw() + 
+theme(legend.position=c(.2,.8), axis.text.x = element_text(angle = 90, hjust = 1)) +
+xlab("Week") + ylab("Diapause incidence")
+
+field.model.fit <- drm(DI ~ Week, data = field_data, curveid = Eggs, fct = LL.5())
+summary(field.model.fit)
+# estimate the 50% intercept
+cpp_field<-data.frame(ED(field.model.fit, 50))
+
 ```
 
