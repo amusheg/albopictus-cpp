@@ -324,16 +324,15 @@ incidence_lat_year_plot
 
 ```{r fig.cap="Figure 2B: Diapause incidence by country and year. Lines represent locally estimated scatterplot smoothing (LOESS). Solid lines, 2018 data; dotted lines, 2008 data.", echo=FALSE, message=FALSE}
 #country_DI
-<<<<<<< HEAD
+
 country_DI_color<-ggplot(filter(DI_short_2, year!=1988), aes(x=lat, y=DI, color=country, shape=year)) + scale_color_manual(values=c("red","blue")) + geom_point(size=3) + theme_bw() + theme(legend.position=c(0.9,0.3)) + stat_smooth(aes(linetype=year), se=FALSE) + scale_linetype_manual(values=c("dotted","solid")) + xlab("Latitude") + ylab("Short-day diapause incidence")
 
 country_DI_bw<-ggplot(filter(DI_short_2, year!=1988), aes(x=lat, y=DI, fill=country, shape=year)) + scale_fill_manual(values=c("black","gray"), name="Country") + scale_shape_manual(values=c(21,24), name="Year") + geom_point(size=3) + theme_bw() + theme(legend.position=c(0.9,0.3), text=element_text(size=14)) + guides(fill = guide_legend(override.aes=list(shape=22))) + xlab("Latitude") + ylab("Short-day diapause incidence")
-=======
+
 ggplot(filter(DI_short_2, year!=1988), aes(x=lat, y=DI, color=country, shape=year)) + scale_color_manual(values=c("red","blue")) + geom_point(size=3) + theme_bw() + theme(legend.position=c(0.9,0.3)) + stat_smooth(aes(linetype=year), se=FALSE) + scale_linetype_manual(values=c("dotted","solid")) + xlab("Latitude") + ylab("Short-day diapause incidence")
 
 ggplot(filter(DI_short_2, year!=1988), aes(x=lat, y=DI, fill=country, shape=year)) + scale_fill_manual(values=c("black","gray")) + 
 scale_shape_manual(values=c(21,24)) + geom_point(size=3) + theme_bw() + theme(legend.position=c(0.9,0.3)) + stat_smooth(aes(linetype=year, color=country), se=FALSE) + scale_color_manual(values=c("black","gray")) + scale_linetype_manual(values=c("dotted","solid")) + xlab("Latitude") + ylab("Short-day diapause incidence")
->>>>>>> b9e6394c79cf3ffa4de3228b1d1aa580a816f24b
 
 ```
 
@@ -409,25 +408,24 @@ remove_geom(japan_map, "label") %>% remove_geom("point") + ylim(24,48) + geom_sc
 
 ```{r}
 #Dose response curve plot from Jen
-cpp<-read.table("CPP.csv", header=TRUE, sep=",")
-cpp
+#cpp<-read.table("CPP.csv", header=TRUE, sep=",")
+#cpp
 
-fm1<-cbind(hatched, nothatched)~photoperiod
-cppmodel<-glm(fm1, data=cpp, family=binomial())
+#fm1<-cbind(hatched, nothatched)~photoperiod
+#cppmodel<-glm(fm1, data=cpp, family=binomial())
 
-summary(cppmodel)
+#summary(cppmodel)
 
-fitteddata1<-predict(cppmodel,type="response")
-fitteddata1
+#fitteddata1<-predict(cppmodel,type="response")
+#fitteddata1
 
-plot(cpp$photoperiod, fitteddata1, ylab="Probability of hatching",
-     xlab="photoperiod", ylim=c(0,1))
-     lines(cpp$photoperiod,fitteddata1, lty=1)
-y<-cpp$hatched/(cpp$hatched+cpp$nothatched)
-text(cpp$photoperiod,y)
-hours<-
--(cppmodel$coefficients["(Intercept)"])/cppmodel$coefficients["photoperiod"]
-hours
+#plot(cpp$photoperiod, fitteddata1, ylab="Probability of hatching",
+ #    xlab="photoperiod", ylim=c(0,1))
+  #   lines(cpp$photoperiod,fitteddata1, lty=1)
+#y<-cpp$hatched/(cpp$hatched+cpp$nothatched)
+#text(cpp$photoperiod,y)
+#hours<-(cppmodel$coefficients["(Intercept)"])/cppmodel$coefficients["photoperiod"]
+#hours
 
 ```
 

@@ -28,7 +28,6 @@ ggplot(gdd400_us, aes(x=year, y=gdd400, color=pop)) + geom_point() + geom_line()
 ```{r}
 gdd400_jp <- read.csv("GDD400_JP.csv", check.names=FALSE) %>% gather(year, gdd400, "1998":"2018", factor_key=FALSE)
 gdd400_jp$year<-as.numeric(gdd400_jp$year)
-ggplot(gdd400_jp, aes(x=year, y=gdd400, color=pop)) + geom_point() + geom_line() + geom_vline(xintercept=c(2008,2018))
 
 ```
 ```{r}
@@ -192,11 +191,23 @@ plot_grid(gdd_08, gdd_18, labels="AUTO")
 ```
 
 
+
 ```{r}
 ggplot(filter(gdd400_all_new, year==2007, CPP_YEAR==2018), aes(x=latitude, y=Estimate, color=country)) + geom_point() + stat_smooth(method=lm) 
 
 ```
 
+```{r}
+#model comparison of gdd-cpp relationship, with and without country as factor
+data_18<-filter(gdd400_all_new, year==2007, CPP_YEAR==2018)
+model1<-lm(Estimate~gdd400, data=data_18)
+model2<-lm(Estimate~gdd400*country, data=data_18)
+anova(model1, model2)
+
+model3<-lm(Estimate~latitude, data=data_18)
+model4<-lm(Estimate~latitude*country, data=data_18)
+anova(model3, model4)
+```
 
 
 ```{r}
