@@ -66,9 +66,6 @@ plot(blockAB$yield ~ blockAB$TotalLarvaeEmbryos)
 #removing papers with <60% or >100% initial count
 blockAB_unfiltered<-blockAB
 blockAB_filtered <- filter(blockAB, yield<=1) %>% filter(yield>=0.6) 
-#test removing papers that had premature larval hatch on paper
-#badpapers<-c("333-1", "334-1", "335-1", "336-1", "337-1", "338-1", "339-1", "340-1", "341-1", "342-1", "343-1","366-1", "367-1", "368-1", "369-1", "370-1", "371-1", "372-1", "373-1", "374-1", "375-1", "376-1")
-#blockAB_filtered <- filter(blockAB, yield<=1) %>% filter(yield>=0.6) %>% filter(!PaperID %in% badpapers)
 ```
 
 ```{r summarize, echo=FALSE, include=FALSE}
@@ -95,11 +92,6 @@ hist(DI_summary$total, main="Total number of viable eggs per cage")
 c("PBS", "FEM", "OAK", "JAC", "BRU", "ZIO", "FAY", "NVA", "WAV", "MAN", "BER", "NEW", "OKI", "TAN", "KAG", "YAT", "SAG", "SHI", "YAM", "HIR", "KYO", "TAK", "TOK", "UTS", "KAN", "KHO", "AIZ", "NIG", "SEN", "SAK")
 DI_summary$pop<-factor(DI_summary$pop, levels=c("PBS", "FEM", "OAK", "JAC", "BRU", "ZIO", "FAY", "NVA", "WAV", "MAN", "BER", "NEW", "OKI", "TAN", "KAG", "YAT", "SAG", "SHI", "YAM", "HIR", "KYO", "TAK", "TOK", "UTS", "KAN", "KHO", "AIZ", "NIG", "SEN", "SAK"))
 DI_plot<-ggplot(DI_summary, aes(x=pp, y=DI, group=pop, fill=country)) + geom_point(shape=21) + facet_wrap(~fct_reorder(pop, lat)) + theme_bw() + xlab("Photoperiod (hours)") + ylab("Dipause incidence") + scale_fill_manual(values=c("black","gray")) + theme(legend.position="NULL")
-```
-
-```{r incidence_lat, echo=FALSE, include=FALSE}
-DI_short<-filter(DI_summary, pp==8)
-ggplot(DI_short, aes(x=lat, y=DI, color=country)) + geom_point() + theme_bw() +stat_smooth()
 ```
 
 ```{r CPP_calc_2018, echo=FALSE, include=FALSE}
@@ -179,23 +171,13 @@ cpp_08_18_shifts<-ggplot(filter(cpp_2, year!=1988), aes(x=lat, y=Estimate, color
   stat_smooth(method=lm, se=FALSE, aes(linetype=year)) + scale_linetype_manual(values=c("dotted","solid")) + theme_bw() + theme(legend.position=c(.8,.25)) + xlab("Latitude") + ylab("Critical photoperiod")
   # + geom_errorbar(aes(ymin=Estimate-StdError, ymax=Estimate+StdError), na.rm=TRUE) 
 
-ggplot(filter(cpp_2, year!=1988), aes(x=lat, y=Estimate, fill=country, shape=year)) + 
+cpp_08_18_shifts_bw<-ggplot(filter(cpp_2, year!=1988), aes(x=lat, y=Estimate, fill=country, shape=year)) + 
   geom_point(size=3) + scale_fill_manual(values=c("black", "gray"), name="Country") + scale_shape_manual(values=c(21,24), name="Year") +
   stat_smooth(method=lm, se=FALSE, aes(linetype=year, color=country)) + scale_linetype_manual(values=c("dotted","solid"), name="Year") + 
   scale_color_manual(values=c("black","gray"), name="Country") +
   guides(fill=guide_legend(override.aes=list(shape=22)), linetype=guide_legend(override.aes=list(color="black")),
   color=guide_legend(override.aes=list(linetype=0)), color=guide_legend(override.aes=list(linetype=0)), linetype=guide_legend(legend.key.width=unit(3,"line"))) +
   theme_bw() + theme(legend.position=c(.8,.25), text=element_text(size=14)) + xlab("Latitude") + ylab("Critical photoperiod (h)")
-
-ggplot(filter(cpp_2, year!=1988), aes(x=lat, y=Estimate, fill=country)) + 
-geom_point(size=3, shape=21) + scale_fill_manual(values=c("black", "gray"), name="Country") + stat_smooth(method=lm, aes(color=country)) + scale_color_manual(values=c("black","gray"), name="Country") +
-  facet_grid(~year) +
-  guides(fill=guide_legend(override.aes=list(shape=21))) +
-  theme_bw() + theme(legend.position=c(.8,.25), text=element_text(size=14)) + 
-  xlab("Latitude") + ylab("Critical photoperiod (h)")
-
-
-
 ```
 
 ```{r incidence_lat_year, echo=FALSE, include=FALSE}
@@ -207,36 +189,11 @@ DI_short_2018<-DI_short_2018[,c(1:4,7)]
 DI_short_2018$year<-rep("2018",nrow(DI_short_2018))
 DI_short_2<-rbind(DI_short_2008, DI_short_2018)
 write_csv(DI_short_2, "diapause_incidence_8h_2008_2018.csv")
-incidence_lat_year_plot<-ggplot(DI_short_2, aes(x=lat, y=DI, color=year, label=pop)) + scale_color_manual(values=c("gray","black")) + 
-  geom_point() + facet_grid(~country) 
-country_DI_2018<-ggplot(DI_short_2018, aes(x=lat, y=DI, color=country)) + scale_color_manual(values=c("red","blue")) + geom_point() + theme_bw() + stat_smooth() + theme(legend.position="none", plot.margin = unit(c(0, 0, 0, 0), "cm"))
-country_DI<-ggplot(filter(DI_short_2, year!=1988), aes(x=lat, y=DI, color=country)) + scale_color_manual(values=c("red","blue")) + geom_point() + theme_bw() + stat_smooth() + theme(legend.position=c(0.9,0.1)) + facet_grid(~year)
 ```
 
 ```{r dimodel, echo=FALSE, include=FALSE}
 dimodel<-lm(DI~lat*country*year, data=DI_short_2)
 dimodel_result<-data.frame(anova(dimodel))
-```
-
-
-```{r day_function, echo=FALSE, include=FALSE}
-findDate<-function(lat, pp, year) {
-#generate day lengths at latitude between July 1 and Dec 31
-x<-daylength(lat,182:365)
-#find position of day length in the daylength vector that is closest to photoperiod queried
-daynumber<-which.min(abs(x-pp))
-#convert day number to date
-origin<-as.character(paste(year,"-07-01",sep=""))
-return(as.character(as.Date(daynumber, origin=origin)))
-}
-```
-
-
-```{r approx_dates, include=FALSE, echo=FALSE, include=FALSE}
-cpp_2$date<-mapply(findDate, lat=cpp_2$lat, pp=cpp_2$Estimate, year=cpp_2$year)
-cpp_2$estimated_date<-format(as.Date(cpp_2$date), "%mm-%dd")
-cpp_2$estimated_date<-as.Date(cpp_2$estimated_date, format="%mm-%dd")
-date_plot<-ggplot(cpp_2, aes(x=lat, y=estimated_date, color=year)) + geom_point() + scale_y_date(date_breaks = "weeks" , date_minor_breaks="days", date_labels = "%b-%d") +  facet_grid(~country) + theme_bw() + stat_smooth(method=lm, se=FALSE)
 ```
 
 ```{r maps, echo=FALSE, include=FALSE}
@@ -272,7 +229,7 @@ japan_map_bw<-ggplot() + geom_polygon(data = jp, aes(x=long, y = lat, group=grou
   coord_fixed(1.3) + geom_point(data = filter(pops, country=="JP", only_2008=="n"), aes(x = longitude, y = latitude), size = 1)  + xlim(c(125, 147)) + ylim(c(24,48)) +
   geom_label_repel(data=filter(pops, country=="JP", only_2008=="n"), aes(x=longitude, y=latitude, label=pop), hjust=0, label.padding=unit(0.1, "lines")) + theme_bw()  + xlab("") + ylab("")
 
-plot_grid(us_map_bw, japan_map_bw)
+map_panels_bw<-plot_grid(japan_map_bw, us_map_bw)
 
 ```
 
@@ -318,21 +275,12 @@ Critical photoperiod was calculated from photoperiod response curves (Figure S1)
 
 Latitude-specific DI (the fraction of diapausing eggs produced under unambiguous short-day conditions) did not significantly differ between 2008 and 2018 in Japan or the US (p=0.94, Figure 2, Table 2).  DI was high (generally greater than 90%) at latitudes north of ~32.5 degrees in both countries. Substantial fractions of constitutively non-diapausing eggs were observed in populations south of South Carolina in the US and in Okinawa in Japan (latitude effect p=<0.001). Latitude-specific DI was lower in the US than in Japan (country effect p=0.026), though there were fewer sites sampled at lower latitudes in Japan than the US due to lack of land between Okinawa and Kagashima. 
 
-```{r fig.cap="Figure 1: Diapause incidence in Japan and US in 2008 and 2018", echo=FALSE, include=FALSE}
-incidence_lat_year_plot
-```
-
 ```{r fig.cap="Figure 2B: Diapause incidence by country and year. Lines represent locally estimated scatterplot smoothing (LOESS). Solid lines, 2018 data; dotted lines, 2008 data.", echo=FALSE, message=FALSE}
 #country_DI
 
 country_DI_color<-ggplot(filter(DI_short_2, year!=1988), aes(x=lat, y=DI, color=country, shape=year)) + scale_color_manual(values=c("red","blue")) + geom_point(size=3) + theme_bw() + theme(legend.position=c(0.9,0.3)) + stat_smooth(aes(linetype=year), se=FALSE) + scale_linetype_manual(values=c("dotted","solid")) + xlab("Latitude") + ylab("Short-day diapause incidence")
 
 country_DI_bw<-ggplot(filter(DI_short_2, year!=1988), aes(x=lat, y=DI, fill=country, shape=year)) + scale_fill_manual(values=c("black","gray"), name="Country") + scale_shape_manual(values=c(21,24), name="Year") + geom_point(size=3) + theme_bw() + theme(legend.position=c(0.9,0.3), text=element_text(size=14)) + guides(fill = guide_legend(override.aes=list(shape=22))) + xlab("Latitude") + ylab("Short-day diapause incidence") + stat_smooth(aes(linetype=year, color=country), se=FALSE) + scale_linetype_manual(values=c("dotted","solid"), name="Year") + scale_color_manual(values=c("black","gray"), name="Country")
-
-ggplot(filter(DI_short_2, year!=1988), aes(x=lat, y=DI, color=country, shape=year)) + scale_color_manual(values=c("red","blue")) + geom_point(size=3) + theme_bw() + theme(legend.position=c(0.9,0.3)) + stat_smooth(aes(linetype=year, color=country), se=FALSE) + scale_linetype_manual(values=c("dotted","solid")) + xlab("Latitude") + ylab("Short-day diapause incidence")
-
-ggplot(filter(DI_short_2, year!=1988), aes(x=lat, y=DI, fill=country, shape=year)) + scale_fill_manual(values=c("black","gray")) + 
-scale_shape_manual(values=c(21,24)) + geom_point(size=3) + theme_bw() + theme(legend.position=c(0.9,0.3)) + stat_smooth(aes(linetype=year, color=country), se=FALSE) + scale_color_manual(values=c("black","gray")) + scale_linetype_manual(values=c("dotted","solid")) + xlab("Latitude") + ylab("Short-day diapause incidence")
 
 ```
 
@@ -348,7 +296,7 @@ cpp_japan_us_years
 
 
 ```{r fig.cap="Figure 4: Shifts in critical photoperiod latitudinal clines. Lines represent linear regressions. Solid lines, 2018; dotted lines, 2008.", echo=FALSE}
-cpp_08_18_shifts
+cpp_08_18_shifts_bw
 ```
 
 ```{r table3, echo=FALSE}
@@ -375,28 +323,28 @@ After eggs were bleached, presence of pharate larvae was determined using the di
 
 The total number of hatched larvae and embryos could differ from the number of eggs initially counted on the paper for the following reasons: 1) presence of inviable eggs or larvae (i.e., eggs that fail to hatch due to developmental abnormalities or larvae that die before being counted), 2) loss of eggs while handling oviposition papers, or 3) inaccurate counting at any step of the scoring process. Based on the distribution of percent differences from the initial counts (Figure S1), we considered oviposition papers with over 100% or less than 60% of the initial count to be less reliable data points. Excluding these data points resulted in 5 cages out of 286 in the total data set having less than 100 remaining eggs, so they were excluded from the photoperiod response curves. These filtering steps and exclusions did not affect CPP estimates for any population except PBS; for this population, excluding the unreliable counts eliminated an outlier in the photoperiod response curve and brought the CPP estimate into the range of CPP values for the rest of the populations (Figure S2). The final photoperiod response curves are shown in Figure S3.
 
-```{r fig.cap="Figure S1: Discrepancies between initial egg counts and final calculated egg counts on oviposition papers.", echo=FALSE}
-plot(blockAB$yield ~ blockAB$TotalLarvaeEmbryos, xlab="Number of viable eggs on oviposition paper", ylab="Viable eggs/initial egg count on paper")
-ggplot(blockAB, aes(x=TotalLarvaeEmbryos, y=yield)) + geom_point() + xlab("Number of viable eggs on oviposition paper") + ylab("Viable eggs/initial egg count on paper") + theme_bw()
-```
+```{r, echo=FALSE}
+yield_plot<-ggplot(blockAB, aes(x=TotalLarvaeEmbryos, y=yield)) + geom_point(alpha=0.5) + xlab("Number of viable eggs on oviposition paper") + ylab("Viable eggs/initial egg count on paper") + theme_bw()
 
-```{r fig.cap="Figure S2. Critical photoperiod calculated with and without filtering oviposition papers based on criteria described. Line represents x=y. Outlier point corresponds to population PBS.", echo=FALSE}
 #comparing CPP values calculated with and without filtering out unreliable oviposition papers
 cpp_filtered<-read.csv("cpp_calcs_filtered.csv") %>% filter(year==2018)
 cpp_unfiltered<-read.csv("cpp_calcs_unfiltered.csv") %>% filter(year==2018)
 names(cpp_filtered)[5]<-"CPP_est_filt"
 names(cpp_unfiltered)[5]<-"CPP_est_unfilt"
 cpp_compare<-left_join(cpp_filtered,cpp_unfiltered,by="pop")
-ggplot(cpp_compare, aes(x=CPP_est_unfilt, y=CPP_est_filt)) + geom_point() + geom_abline(slope=1, intercept=0) + xlab("CPP without filtering criteria") + ylab("CPP calculated with filtering criteria") + theme_bw()
+filter_compare_plot<-ggplot(cpp_compare, aes(x=CPP_est_unfilt, y=CPP_est_filt)) + geom_point() + geom_abline(slope=1, intercept=0) + xlab("CPP without filtering criteria") + ylab("CPP calculated with filtering criteria") + theme_bw()
 ```
 
-```{r fig.cap="Figure S3: Photoperiod response curves", echo=FALSE}
+```{r, echo=FALSE}
+quality_control_fig<-plot_grid(yield_plot, filter_compare_plot, labels="AUTO")
+quality_control_fig
+```
+
+
+```{r, echo=FALSE}
 DI_plot 
 ```
 
-```{r fig.cap="Supplemental figure TBD. Diapause incidence (2018) by country. Dark sections of pie charts represent diapausing fraction; white fractions represent non-diapausing.", echo=FALSE, message=FALSE}
-DI_pies_2018
-```
 
 ```{r figs_for_poster, include=FALSE, echo=FALSE}
 ggplot(filter(cpp_2, year!=1988), aes(x=lat, y=Estimate, color=country, shape=year)) + 
@@ -404,29 +352,6 @@ ggplot(filter(cpp_2, year!=1988), aes(x=lat, y=Estimate, color=country, shape=ye
      stat_smooth(method=lm, se=FALSE, aes(linetype=year)) + scale_linetype_manual(values=c("dotted","solid")) + theme_bw() + theme(legend.position=c(.8,.25), text=element_text(size=24)) + xlab("Latitude") + ylab("Critical photoperiod")
 remove_geom(us_map, "label") %>% remove_geom("point") + ylim(24,48) + geom_scatterpie(data=filter(DI_info, country=="US", year=="2018"), aes(x=longitude, y=latitude, r=.7, alpha=0.95), cols=c("Diapause", "Nondiapause")) + scale_fill_manual(values=c("black","white")) + theme(text=element_text(size=24), axis.title.x=element_blank(), axis.text.x=element_blank(), axis.ticks.x=element_blank(), axis.title.y=element_blank(), legend.position="none", plot.margin = unit(c(0, 0, 0, 0), "null"))
 remove_geom(japan_map, "label") %>% remove_geom("point") + ylim(24,48) + geom_scatterpie(data=filter(DI_info, country=="JP", year=="2018"), aes(x=longitude, y=latitude, r=.7, alpha=0.95), cols=c("Diapause", "Nondiapause")) + scale_fill_manual(values=c("black","white")) + theme(text=element_text(size=24), axis.title.x=element_blank(), axis.text.x=element_blank(), axis.ticks.x=element_blank(), axis.title.y=element_blank(), legend.position="none", plot.margin = unit(c(0, 0, 0, 0), "null")) 
-```
-
-```{r}
-#Dose response curve plot from Jen
-#cpp<-read.table("CPP.csv", header=TRUE, sep=",")
-#cpp
-
-#fm1<-cbind(hatched, nothatched)~photoperiod
-#cppmodel<-glm(fm1, data=cpp, family=binomial())
-
-#summary(cppmodel)
-
-#fitteddata1<-predict(cppmodel,type="response")
-#fitteddata1
-
-#plot(cpp$photoperiod, fitteddata1, ylab="Probability of hatching",
- #    xlab="photoperiod", ylim=c(0,1))
-  #   lines(cpp$photoperiod,fitteddata1, lty=1)
-#y<-cpp$hatched/(cpp$hatched+cpp$nothatched)
-#text(cpp$photoperiod,y)
-#hours<-(cppmodel$coefficients["(Intercept)"])/cppmodel$coefficients["photoperiod"]
-#hours
-
 ```
 
 
