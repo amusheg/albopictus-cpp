@@ -30,6 +30,7 @@ gdd400_jp <- read.csv("GDD400_JP.csv", check.names=FALSE) %>% gather(year, gdd40
 gdd400_jp$year<-as.numeric(gdd400_jp$year)
 
 ```
+
 ```{r}
 #adding latitudes
 locations<-read.csv("mapping_pops_cpp_expt.csv")
@@ -58,7 +59,7 @@ ggplot(filter(gdd400_all, year>=2008, only_2008=="n"), aes(x=latitude, y=gdd400,
 
 ```
 ```{r}
-ggplot(filter(gdd400_all, only_2008=="n", year!=2018), aes(x=latitude, y=gdd400, color=country)) + scale_color_manual(values=c("black", "gray"), name="Country") + geom_point() + facet_wrap(~year) + xlab("Latitude") + ylab("GDD Deadline (ordinal day)") + theme_bw() 
+ggplot(filter(gdd400_all, only_2008=="n", year!=2018), aes(x=latitude, y=gdd400, fill=country)) + scale_fill_manual(values=c("black", "gray"), name="Country") + geom_point(shape=21) + facet_wrap(~year) + xlab("Latitude") + ylab("GDD Deadline (ordinal day)") + theme_bw() + theme(legend.position="bottom")
 
 ```
 
@@ -228,7 +229,7 @@ field_data<-read.csv("DI_2015_FIELD.csv")
 field_data$WeekDate <- reorder(field_data$WeekDate, field_data$Week)
 ggplot(field_data, aes(x=WeekDate, y=DI, fill=Eggs)) + geom_point(size=3, shape=21) + scale_fill_manual(values=c("white","grey"), name="Mosquito Population") + theme_bw() + 
 theme(legend.position=c(.2,.8), axis.text.x = element_text(angle = 90, hjust = 1)) +
-xlab("Week") + ylab("Diapause incidence")
+xlab("Week") + ylab("Diapause incidence") + geom_vline(aes(xintercept=10.39), linetype="dotted", color="grey") + geom_vline(aes(xintercept=9.99), linetype="dotted", color="black")
 
 field.model.fit <- drm(DI ~ Week, data = field_data, curveid = Eggs, fct = LL.5())
 summary(field.model.fit)
