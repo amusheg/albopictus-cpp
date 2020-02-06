@@ -278,11 +278,10 @@ gdd_cpp_plot<-plot_grid(gdd_08, gdd_18, labels="AUTO")
 #2015 Diapause Incidence Field Trial
 field_data<-read.csv("DI_2015_FIELD.csv")
 field_data$WeekDate <- reorder(field_data$WeekDate, field_data$Week)
-ggplot(field_data, aes(x=WeekDate, y=DI, fill=Eggs)) + geom_point(size=3, shape=21) + scale_fill_manual(values=c("white","grey"), name="Mosquito Population") + theme_bw() + 
-theme(legend.position=c(.2,.8), axis.text.x = element_text(angle = 90, hjust = 1)) +
-xlab("Week") + ylab("Diapause incidence") + geom_vline(aes(xintercept=10.39), linetype="dotted", color="grey") + geom_vline(aes(xintercept=9.99), linetype="dotted", color="black")
+ggplot(filter(field_data, Eggs=="Field"), aes(x=WeekDate, y=DI)) + geom_point(size=3, shape=21, fill="gray") + theme_bw() + theme(axis.text.x = element_text(angle = 90, hjust = 1)) +
+xlab("Week") + ylab("Diapause incidence") + geom_vline(aes(xintercept=10.4), linetype="dotted")
 
-field.model.fit <- drm(DI ~ Week, data = field_data, curveid = Eggs, fct = LL.5())
+field.model.fit <- drm(DI ~ Week, data = filter(field_data, Eggs=="Field"), fct = LL.5())
 summary(field.model.fit)
 # estimate the 50% intercept
 cpp_field<-data.frame(ED(field.model.fit, 50))
