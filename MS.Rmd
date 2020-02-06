@@ -230,7 +230,74 @@ japan_map_bw<-ggplot() + geom_polygon(data = jp, aes(x=long, y = lat, group=grou
   geom_label_repel(data=filter(pops, country=="JP", only_2008=="n"), aes(x=longitude, y=latitude, label=pop), hjust=0, label.padding=unit(0.1, "lines")) + theme_bw()  + xlab("") + ylab("")
 
 map_panels_bw<-plot_grid(japan_map_bw, us_map_bw)
+```
 
+```{r, echo=FALSE}
+#GDD deadline data
+#importing and reshaping table
+gdd400_us <- read.csv("GDD400_US.csv", check.names=FALSE) %>% gather(year, gdd400, "1998":"2018", factor_key=FALSE)
+gdd400_us$year<-as.numeric(gdd400_us$year)
+gdd400_jp <- read.csv("GDD400_JP.csv", check.names=FALSE) %>% gather(year, gdd400, "1998":"2018", factor_key=FALSE)
+gdd400_jp$year<-as.numeric(gdd400_jp$year)
+#adding latitudes
+locations<-read.csv("mapping_pops_cpp_expt.csv")
+gdd400_us<-left_join(gdd400_us, dplyr::select(locations, pop, latitude, country, only_2008), by=c("pop"))
+gdd400_jp<-left_join(gdd400_jp, dplyr::select(locations, pop, latitude, country, only_2008), by=c("pop"))
+gdd400_all<-rbind(gdd400_us, gdd400_jp)
+gdd400_all$pop<-as.factor(gdd400_all$pop)
+gdd400_all<-mutate(gdd400_all, interval=case_when(year<=2017 & year>=2008 ~ 'y2008-2017',
+                                                  year<2008 ~ 'y1998-2007'))
+```
+
+```{r, echo=FALSE}
+gdd_deadline_plots<-ggplot(filter(gdd400_all, only_2008=="n", year!=2018), aes(x=latitude, y=gdd400, fill=country)) + scale_fill_manual(values=c("black", "gray"), name="Country") + geom_point(shape=21) + facet_wrap(~year) + xlab("Latitude") + ylab("GDD Deadline (ordinal day)") + theme_bw() + theme(legend.position="bottom")
+```
+
+```{r}
+#adding 2008 and 2018 CPP values 
+cpp_year<-dplyr::select(read.csv("cpp_calcs_filtered.csv"), pop, Estimate, year) %>% filter(year!="1988") %>% rename("CPP_YEAR"="year")
+gdd400_all_new<-left_join(gdd400_all, cpp_year, by="pop")
+gdd400_all_new$CPP_YEAR<-as.factor(gdd400_all_new$CPP_YEAR)
+
+```
+
+```{r}
+#plotting GDD deadlines and CPP
+gdd_08 <- ggplot(filter(gdd400_all_new, year==2007, CPP_YEAR==2008), aes(x=gdd400, y=Estimate, fill=country)) + scale_fill_manual(values=c("black","gray"), name="Country") + geom_point(size=3, shape=21) + stat_smooth(method=lm, se=FALSE, aes(color=country)) + scale_color_manual(values=c("black","gray"), name="Country") +
+  theme_bw() + theme(legend.position="none", text=element_text(size=14)) +
+  xlab("GDD Deadline (ordinal day), 2007") + ylab("Critical photoperiod (h), 2008")
+
+gdd_18 <- ggplot(filter(gdd400_all_new, year==2017, CPP_YEAR==2018), aes(x=gdd400, y=Estimate, fill=country)) + scale_fill_manual(values=c("black","gray"), name="Country") + geom_point(size=3, shape=21) + stat_smooth(method=lm, se=FALSE, aes(color=country)) + scale_color_manual(values=c("black","gray"), name="Country") +
+theme_bw() + theme(legend.position=c(.8,.8), text=element_text(size=14)) +
+xlab("GDD Deadline (ordinal day), 2017") + ylab("Critical photoperiod (h), 2018")
+
+gdd_cpp_plot<-plot_grid(gdd_08, gdd_18, labels="AUTO")
+```
+
+```{r}
+#2015 Diapause Incidence Field Trial
+field_data<-read.csv("DI_2015_FIELD.csv")
+field_data$WeekDate <- reorder(field_data$WeekDate, field_data$Week)
+ggplot(field_data, aes(x=WeekDate, y=DI, fill=Eggs)) + geom_point(size=3, shape=21) + scale_fill_manual(values=c("white","grey"), name="Mosquito Population") + theme_bw() + 
+theme(legend.position=c(.2,.8), axis.text.x = element_text(angle = 90, hjust = 1)) +
+xlab("Week") + ylab("Diapause incidence") + geom_vline(aes(xintercept=10.39), linetype="dotted", color="grey") + geom_vline(aes(xintercept=9.99), linetype="dotted", color="black")
+
+field.model.fit <- drm(DI ~ Week, data = field_data, curveid = Eggs, fct = LL.5())
+summary(field.model.fit)
+# estimate the 50% intercept
+cpp_field<-data.frame(ED(field.model.fit, 50))
+
+```
+
+
+```{r}
+data_18<-gdd400_all_new %>% filter(CPP_YEAR==2018) %>% filter(year==2017)
+model1<-lm(Estimate~gdd400*country, data=data_18)
+anova(model1)
+
+data_08<-gdd400_all_new %>% filter(CPP_YEAR==2008) %>% filter(year==2007)
+model2<-lm(Estimate~gdd400*country, data=data_08)
+anova(model2)
 ```
 
 ## Introduction
