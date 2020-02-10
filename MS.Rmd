@@ -266,8 +266,6 @@ gdd_all$gdd<-(gdd_all$gdd400 + gdd_all$gdd465)/2
 ```{r, echo=FALSE}
 gdd_deadline_plots<-ggplot(filter(gdd400_all, only_2008=="n", year!=2018), aes(x=latitude, y=gdd400, fill=country)) + scale_fill_manual(values=c("black", "gray"), name="Country") + geom_point(shape=21) + facet_wrap(~year) + xlab("Latitude") + ylab("GDD Deadline (ordinal day)") + theme_bw() + theme(legend.position="bottom")
 
-ggplot(filter(gdd_all, only_2008=="n", year!=2018), aes(x=latitude, y=gdd, fill=country)) + scale_fill_manual(values=c("black", "gray"), name="Country") + geom_point(shape=21) + facet_wrap(~year) + xlab("Latitude") + ylab("GDD Deadline (ordinal day)") + theme_bw() + theme(legend.position="bottom")
-
 ```
 
 ```{r}
@@ -290,14 +288,6 @@ lat_gdd_average<-ggplot(filter(gdd_summaries, only_2008=="n"), aes(x=latitude, y
 
 ```
 
-
-```{r}
-m1<-lm(cpp~gdd400_mean*country, data=filter(interval_summaries, interval=="y2008-2017", CPP_YEAR==2018))
-m2<-lm(cpp~gdd400_mean*country, data=filter(interval_summaries, interval=="y1998-2007", CPP_YEAR==2008))
-
-```
-
-
 ```{r}
 #plotting GDD deadlines and CPP
 gdd_08 <- ggplot(filter(gdd400_all_new, year==2007, CPP_YEAR==2008), aes(x=gdd400, y=Estimate, fill=country)) + scale_fill_manual(values=c("black","gray"), name="Country") + geom_point(size=3, shape=21) + stat_smooth(method=lm, se=FALSE, aes(color=country)) + scale_color_manual(values=c("black","gray"), name="Country") +
@@ -308,26 +298,23 @@ gdd_18 <- ggplot(filter(gdd400_all_new, year==2017, CPP_YEAR==2018), aes(x=gdd40
 theme_bw() + theme(legend.position=c(.8,.8), text=element_text(size=14)) +
 xlab("GDD Deadline (ordinal day), 2017") + ylab("Critical photoperiod (h), 2018")
 
-gdd_cpp_plot<-plot_grid(gdd_08, gdd_18, labels="AUTO")
-
-ggplot(filter(gdd_all_new, year==2007, CPP_YEAR==2008), aes(x=gdd, y=Estimate, fill=country)) + scale_fill_manual(values=c("black","gray"), name="Country") + geom_point(size=3, shape=21) + stat_smooth(method=lm, se=FALSE, aes(color=country)) + scale_color_manual(values=c("black","gray"), name="Country") +
-  theme_bw() + theme(legend.position="none", text=element_text(size=14)) +
-  xlab("GDD Deadline (ordinal day), 2007") + ylab("Critical photoperiod (h), 2008")
-
-ggplot(filter(gdd_all_new, year==2017, CPP_YEAR==2018), aes(x=gdd, y=Estimate, fill=country)) + scale_fill_manual(values=c("black","gray"), name="Country") + geom_point(size=3, shape=21) + stat_smooth(method=lm, se=FALSE, aes(color=country)) + scale_color_manual(values=c("black","gray"), name="Country") +
-theme_bw() + theme(legend.position=c(.8,.8), text=element_text(size=14)) +
-xlab("GDD Deadline (ordinal day), 2017") + ylab("Critical photoperiod (h), 2018")
-
 ```
+
 ```{r}
 #plotting CPP by GDD deadlines averaged over intervals
 interval_summaries<-gdd_all_new %>% filter(interval!="NA") %>% group_by(pop, interval, CPP_YEAR) %>% dplyr::summarise(gdd400_mean=mean(gdd400), gdd400_sd=sd(gdd400), cpp=mean(Estimate), latitude=mean(latitude), country=first(country), only_2008=first(only_2008))
 
-ggplot(filter(interval_summaries, interval=="y2008-2017", CPP_YEAR==2018), aes(x=gdd400_mean, y=cpp, fill=country)) + geom_point(shape=21) + scale_fill_manual(values=c("black","gray"), name="Country") + stat_smooth(method=lm, se=FALSE, aes(color=country)) + scale_color_manual(values=c("black", "gray"), name="Country") + theme_bw() + theme(legend.position="bottom") + xlab("Mean GDD deadline, 2008-2017 (ordinal day)") + ylab("Critical photoperiod, 2018 (h)")
+gdd_cpp_interval_18<-ggplot(filter(interval_summaries, interval=="y2008-2017", CPP_YEAR==2018), aes(x=gdd400_mean, y=cpp, fill=country)) + geom_point(size=3, shape=21) + scale_fill_manual(values=c("black","gray"), name="Country") + stat_smooth(method=lm, se=FALSE, aes(color=country)) + scale_color_manual(values=c("black", "gray"), name="Country") + theme_bw() + theme(legend.position="none", text=element_text(size=14)) + xlab("Mean GDD deadline, 2008-2017 (ordinal day)") + ylab("Critical photoperiod, 2018 (h)")
 
-ggplot(filter(interval_summaries, interval=="y1998-2007", CPP_YEAR==2008), aes(x=gdd400_mean, y=cpp, fill=country)) + geom_point(shape=21) + scale_fill_manual(values=c("black","gray"), name="Country") + stat_smooth(method=lm, se=FALSE, aes(color=country)) + scale_color_manual(values=c("black", "gray"), name="Country") + theme_bw() + theme(legend.position="bottom") + xlab("Mean GDD deadline, 1998-2007 (ordinal day)") + ylab("Critical photoperiod, 2008 (h)")
+gdd_cpp_interval_08<-ggplot(filter(interval_summaries, interval=="y1998-2007", CPP_YEAR==2008), aes(x=gdd400_mean, y=cpp, fill=country)) + geom_point(size=3, shape=21) + scale_fill_manual(values=c("black","gray"), name="Country") + stat_smooth(method=lm, se=FALSE, aes(color=country)) + scale_color_manual(values=c("black", "gray"), name="Country") + theme_bw() + theme(legend.position="none", text=element_text(size=14)) + xlab("Mean GDD deadline, 1998-2007 (ordinal day)") + ylab("Critical photoperiod, 2008 (h)")
 
 ```
+
+```{r}
+gdd_cpp_plot<-plot_grid(gdd_08, gdd_18, gdd_cpp_interval_08, gdd_cpp_interval_18, nrow=2, labels="AUTO")
+
+```
+
 
 ```{r}
 #2015 Diapause Incidence Field Trial
@@ -347,17 +334,53 @@ cpp_field<-data.frame(ED(field.model.fit, 50))
 ```{r}
 data_18<-gdd400_all_new %>% filter(CPP_YEAR==2018) %>% filter(year==2017)
 model1<-lm(Estimate~gdd400*country, data=data_18)
-anova(model1)
 
 data_08<-gdd400_all_new %>% filter(CPP_YEAR==2008) %>% filter(year==2007)
 model2<-lm(Estimate~gdd400*country, data=data_08)
-anova(model2)
 
-data_18<-gdd_all_new %>% filter(CPP_YEAR==2018) %>% filter(year==2017)
-model1<-lm(Estimate~gdd*country, data=data_18)
+model3<-lm(cpp~gdd400_mean*country, data=filter(interval_summaries, interval=="y2008-2017", CPP_YEAR==2018))
+model4<-lm(cpp~gdd400_mean*country, data=filter(interval_summaries, interval=="y1998-2007", CPP_YEAR==2008))
+
 anova(model1)
+anova(model2)
+anova(model3)
+anova(model4)
 
+```
 
+```{r}
+write.csv(filter(gdd400_all_new, year %in% c(2007,2017)), "gdd_cpp_07_17.csv")
+prev_year<-read.csv("gdd_prevyear.csv")
+prev_year$CPP_YEAR<-as.factor(prev_year$CPP_YEAR)
+
+write.csv(interval_summaries, "interval_summaries.csv")
+prev_interval<-read.csv("gdd_previnterval.csv")
+prev_interval$CPP_YEAR<-as.factor(prev_interval$CPP_YEAR)
+
+```
+
+```{r}
+prevyear_all<-ggplot(prev_year, aes(x=prev_year_gdd400, y=Estimate, fill=country, shape=CPP_YEAR)) + 
+  geom_point(size=3) + scale_fill_manual(values=c("black", "gray"), name="Country") + scale_shape_manual(values=c(21,24), name="Year") +
+  stat_smooth(method=lm, se=FALSE, aes(linetype=CPP_YEAR, color=country)) + scale_linetype_manual(values=c("dotted","solid"), name="Year") + 
+  scale_color_manual(values=c("black","gray"), name="Country") +
+  guides(fill=guide_legend(override.aes=list(shape=22)), linetype=guide_legend(override.aes=list(color="black")),
+  color=guide_legend(override.aes=list(linetype=0)), color=guide_legend(override.aes=list(linetype=0)), linetype=guide_legend(legend.key.width=unit(3,"line"))) +
+  theme_bw() + theme(legend.position="none", text=element_text(size=14)) + xlab("Previous year's GDD deadline (ordinal day)") + ylab("Critical photoperiod (h)")
+
+previnterval_all<-ggplot(prev_interval, aes(x=gdd400_mean_previnterval, y=cpp, fill=country, shape=CPP_YEAR)) + 
+  geom_point(size=3) + scale_fill_manual(values=c("black", "gray"), name="Country") + scale_shape_manual(values=c(21,24), name="Year") +
+  stat_smooth(method=lm, se=FALSE, aes(linetype=CPP_YEAR, color=country)) + scale_linetype_manual(values=c("dotted","solid"), name="Year") + 
+  scale_color_manual(values=c("black","gray"), name="Country") +
+  guides(fill=guide_legend(override.aes=list(shape=22)), linetype=guide_legend(override.aes=list(color="black")),
+  color=guide_legend(override.aes=list(linetype=0)), color=guide_legend(override.aes=list(linetype=0)), linetype=guide_legend(legend.key.width=unit(3,"line"))) +
+  theme_bw() + theme(legend.position=c(.8,.75), text=element_text(size=14)) + xlab("Previous decade's GDD deadline (ordinal day)") + ylab("Critical photoperiod (h)")
+
+plot_grid(prevyear_all, previnterval_all, labels="AUTO")
+```
+```{r}
+all_prevyear_model<-lm(Estimate~prev_year_gdd400*country*CPP_YEAR, data=prev_year)
+all_previnterval_model<-lm(cpp~gdd400_mean_previnterval*country*CPP_YEAR, data=prev_interval)
 ```
 
 ## Introduction
@@ -374,7 +397,7 @@ anova(model1)
 ## Methods
 
 ### Mosquito population sampling and pre-experiment colony maintenance
-Mosquito populations were sampled as larvae and pupae in the eastern USA and Japan in June-September 2018, at latitudes ranging from `r min(pops$latitude)` to `r max(pops$latitude)`. Sampling locations are described in Table 1. Locations in the US were identical to locations sampled in 2008. Japanese population samples were confirmed to be Ae. albopictus via morphological identification following [@tanakaRevisionAdultLarval1979] and sent to Georgetown as F1 eggs (except for TAK, for which F2 eggs were provided). At least 50 male and 50 female adult mosquitoes were used to initiate all populations in the laboratory at Georgetown, except for SEN, which had 37 females and 39 males.  
+Mosquito populations were sampled as larvae and pupae in the eastern USA and Japan in June-September 2018, at latitudes ranging from `r min(pops$latitude)` to `r max(pops$latitude)`. Sampling locations are described in Table 1. Locations in the US were identical to locations sampled in 2008. Japanese population samples were confirmed to be Ae. albopictus via morphological identification following [@tanakaRevisionAdultLarval1979] and sent to Georgetown as F1 or F2 eggs. At least 50 male and 50 female adult mosquitoes were used to initiate all populations in the laboratory at Georgetown, except for SEN, which had 37 females and 39 males.  
 
 ```{r table1, echo=FALSE}
 kable(filter(pops, only_2008=="n")[,1:6], col.names=c("Population", "City", "Latitude", "Longitude", "Country", "Life Stage Sampled"), caption="Table 1: 2018 Sampling Locations")
@@ -396,16 +419,14 @@ For each cage, the counts of larvae and embryos across all oviposition papers we
 Photoperiod response data from 2008 were obtained from the data files of Urbanski et al 2012 (doi:10.5061/dryad.68277435).
 
 ### Growing degree day models
-We reasoned that the optimal time for entering diapause depended on the amount of time required to complete a full generation under particular climatic conditions. Insect phenology studies often estimate generation times using growing degree day (GDD) models. Based on a survey of literature of Aedes albopictus growth rates under various temperature conditions, we estimated that a mosquito generation - from the egg stage through ovipostion - required 400-465 GDD. We then used climate records over the past 20 years from our sampling locations to calculate a yearly GDD-based "deadline" for diapause at each location: the date after which eggs laid would not have enough growing degree days left in the season to complete another generation. Further details about how these dates were calculated can be found in Supplementary File X.
 
-Although field data about Aedes albopictus diapause egg production are scarce, we were able to use field observations collected in 2015 at site in Washington, DC, USA. Briefly, oviposition cups were placed outdoors and Aedes albopictus eggs collected weekly were scored for diapause incidence using the same methods described here. A five-parameter log-logistic model was fit to the diapause incidence curve (Fig S) to determine the critical date at which the majority of eggs produced by wild mosquitoes were in diapause. The critical date occurred during the week of September 7, 2015, corresponding to ordinal day 250. The calculated deadline for Manassas, VA in 2015 was 256-263. In 2014, the calculated deadline was 247-252. These results confirmed that GDD deadlines generally reasonably correspond to field observations and suggested that examining the GDD deadline in years preceding the collection year is a reasonable approach.
 
 ### Statistical analysis
 Critical photoperiod was calculated from photoperiod response curves (Figure S1) as ED50 using a five-parameter generalized log-logistic model in the R (3.6.0) package drc (`r packageVersion("drc")`). Effects of latitude, country and year (2008 vs. 2018) on CPP and on DI were analyzed with linear models. Data manipulation and figure construction were carried out using packages in tidyverse (`r packageVersion("tidyverse")`).
 
-## Results
+## Results and Discussion (mostly Results)
 
-Latitude-specific DI (the fraction of diapausing eggs produced under unambiguous short-day conditions) did not significantly differ between 2008 and 2018 in Japan or the US (p=0.94, Figure 2, Table 2).  DI was high (generally greater than 90%) at latitudes north of ~32.5 degrees in both countries. Substantial fractions of constitutively non-diapausing eggs were observed in populations south of South Carolina in the US and in Okinawa in Japan (latitude effect p=<0.001). Latitude-specific DI was lower in the US than in Japan (country effect p=0.026), though there were fewer sites sampled at lower latitudes in Japan than the US due to lack of land between Okinawa and Kagashima. 
+Latitude-specific DI (the fraction of diapausing eggs produced under unambiguous short-day conditions) did not significantly differ between 2008 and 2018 in Japan or the US (p=0.94, Figure 2, Table 2).  DI was high (generally greater than 90%) at latitudes north of ~32.5 degrees in both countries. Substantial fractions of constitutively non-diapausing eggs were observed in populations south of South Carolina in the US and in Okinawa in Japan (latitude p=<0.001). Latitude-specific DI was lower in the US than in Japan (country p=0.026), though there were fewer sites sampled at lower latitudes in Japan than the US due to lack of land between Okinawa and Kagashima. 
 
 ```{r fig.cap="Figure 2B: Diapause incidence by country and year. Lines represent locally estimated scatterplot smoothing (LOESS). Solid lines, 2018 data; dotted lines, 2008 data.", echo=FALSE, message=FALSE}
 #country_DI
@@ -420,24 +441,37 @@ country_DI_bw<-ggplot(filter(DI_short_2, year!=1988), aes(x=lat, y=DI, fill=coun
 kable(prettify(anova(dimodel)), digits=3, caption="Table 2: Effects of latitude, country and year (2008 vs 2018) on diapause incidence.")
 ```
 
-CPP values correlated strongly with latitude in the US and Japan (p<0.001, Table 3). Latitudinal clines were nearly parallel to those observed in 2008 (Figure 3), as verified by the lack of a significant interaction term between year and latitude (p=0.17). However, the intercepts of the latitudinal clines significantly differed between both the US and Japan, and between 2008 and 2018 (p<0.001 for both country and year). Latitude-specific CPP was higher in Japan than the US, and higher in 2018 compared to 2008. This implies earlier entry into diapause at the same latitude in Japan than in the US, as well as earlier entry into diapause in the same locations in 2018 than in 2008. 
-
-```{r fig.cap="Figure 3: Critical photoperiod (CPP) as a function of latitude in the US and Japan in 1988, 2008, and 2018. Error bars represent standard errors of CPP estimates. Errors around 1988 CPP estimates are absent because experiment and calculations were conducted using different methods and raw data were not available.", echo=FALSE, message=FALSE, include=FALSE}
-cpp_japan_us_years
-```
+CPP values correlated strongly with latitude in the US and Japan (p<0.001, Table 3). Latitudinal clines were nearly parallel to those observed in 2008 (Figure 3), as verified by the lack of a significant interaction term between year and latitude (p=0.17). However, the intercepts of the latitudinal clines significantly differed between both the US and Japan, and between 2008 and 2018 (p<0.001 for both country and year). Latitude-specific CPP was higher in Japan than the US, and higher in 2018 compared to 2008. This implies earlier entry into diapause at the same latitude in Japan than in the US, as well as earlier entry into diapause in the same locations in 2018 than in 2008. Both of these differences are contrary to expectation based on global warming trends and the consistently milder winters in Japan compared to US.
 
 
-```{r fig.cap="Figure 4: Shifts in critical photoperiod latitudinal clines. Lines represent linear regressions. Solid lines, 2018; dotted lines, 2008.", echo=FALSE}
+
+```{r fig.cap="Figure : Shifts in critical photoperiod latitudinal clines. Lines represent linear regressions. Solid lines, 2018; dotted lines, 2008.", echo=FALSE}
 cpp_08_18_shifts_bw
 ```
 
 ```{r table3, echo=FALSE}
-kable(prettify(anova(cppmodel)), caption="Table 3: Effects of latitude, country and year on critical photoperiod in 2008 and 2018.")
+kable(prettify(anova(cppmodel)), digits=3, caption="Table 3: Effects of latitude, country and year on critical photoperiod in 2008 and 2018.")
 ```
+
+We reasoned that the optimal time for entering diapause depended on the amount of time required to complete a full generation under particular climatic conditions. Insect phenology studies often estimate generation times using growing degree day (GDD) models. Based on a survey of literature of Aedes albopictus growth rates under various temperature conditions, we estimated that a mosquito generation - from the egg stage through ovipostion - required 400-465 GDD. We used climate records over the past 20 years from our sampling locations to calculate a yearly GDD-based "deadline" for diapause at each location: the date after which eggs laid would not have enough growing degree days left in the year to complete another generation. 
+
+Although field data about Aedes albopictus diapause egg production are scarce, we were able to use field observations collected in 2015 at site in Washington, DC, USA as preliminary verification of the GDD approach. Briefly, oviposition cups were placed outdoors and Aedes albopictus eggs collected weekly were scored for diapause incidence using the same methods described here. The diapause incidence curve (Fig S) was used to determine the critical date at which the majority of eggs produced by wild mosquitoes were in diapause. The critical date occurred during the week of September 7, 2015, corresponding to ordinal day 250. The calculated deadline for Manassas, VA (~50 km from DC) in 2015 was 256-263. In 2014, the calculated deadline was 247-252. These results confirmed that GDD deadlines generally correspond to field observations and suggested that examining the GDD deadline in years preceding the collection year is a reasonable approach.
 
 GDD deadlines calculated using historical climate data correlated with latitude, as expected. The latitude-specific GDD deadline was earlier in Japan in the US for most years examined (Figure SX), indicating that although the Japanese locations generally experienced a later date of first frost, the limits of the growing seasons in the two regions may be better captured by measures such as GDD that take into account the distribution of temperature conditions over the season. 
 
-We examined the relationship between critical photoperiod and two GDD deadline values for each population: the GDD deadline in the year immediately preceding the collection of the 2008 and 2018 populations, and the mean GDD deadline over the preceding 10-year interval. These four correlations (2008 CPP vs 2007 GDD deadline; 2008 CPP vs 1998-2007 mean deadline; 2018 CPP vs 2017 deadline; and 2018 CPP vs. 2008-2017 mean deadline) were analyzed independently. In all four models, the country effect was not siginificant, meaning that GDD deadlines predicted critical photoperiods across countries. There was also a significant GDD deadline by country interaction effect in the model in which 2017 deadline was used as an explanatory variable for 2018 CPP data, but not when the GDD deadline was averaged over the preceding 10 years, suggesting that year-to-year variation may additionally affect the 
+We examined the relationship between critical photoperiod and two GDD deadline values for each population: the 400 GDD deadline in the year immediately preceding the 2008 and 2018 studies, and the mean 400 GDD deadline over the preceding 10-year interval. [NB: 2008 populations were actually collected over the period 2005-2008...] These four correlations (2008 CPP vs 2007 GDD deadline; 2008 CPP vs 1998-2007 mean deadline; 2018 CPP vs 2017 deadline; and 2018 CPP vs. 2008-2017 mean deadline) were analyzed independently. In all four models, the country effect was not significant, suggesting that GDD deadlines predicted critical photoperiods across countries. There was also a significant GDD deadline by country interaction effect in the model in which 2017 deadline was used as an explanatory variable for 2018 CPP data, but not when the GDD deadline was averaged over the preceding 10 years, suggesting that year-to-year variation may additionally affect the relationship between local GDD conditions and local CPP. 
+
+```{r}
+gdd_cpp_plot
+```
+
+```{r}
+kable(rbind(prettify(anova(model1)), prettify(anova(model2)), prettify(anova(model3)), prettify(anova(model4))), digits=3)  %>% pack_rows("2018 CPP vs 2017 GDD Deadline", 1, 3) %>% pack_rows("2008 CPP vs 2007 GDD Deadline", 4, 6) %>% pack_rows("2018 CPP vs 2008-2017 Average GDD Deadline", 7, 9) %>% pack_rows("2008 CPP vs 1998-2007 Average GDD Deadline", 10, 12)
+
+```
+The GDD-based estimate of diapause deadline date does not explain the shift to earlier critical photoperiod between 2008 and 2018. Although deadline dates vary from year to year
+
+We cannot exclude the possibility that the temporal shift in CPP between the 2008 and 2018 studies was due to experimental variability. For example, some of the populations in the 2008 study had been maintained in the laboratory for up to 14 generations, whereas in the current experiment they were reared for 3-4 laboratory generations; it is unknown how quickly acclimation or adaptation to laboratory conditions occurs in this species. In addition, there were likely cryptic differences in laboratory rearing conditions between 2008 and 2018, as evidenced by the fact that in the 2008 study more cages required multiple blood meals to produce sufficient eggs for analysis, hinting at higher mortality, lower fecundity, or both. 
 
 ## Supplementary File 1
 
@@ -457,7 +491,7 @@ Oviposition papers were trimmed to a ~2 cm strip surrounding the former location
 
 After eggs were bleached, presence of pharate larvae was determined using the diagnostic criteria of visible eye spots and abdominal segmentation. On some oviposition papers, larvae “hatched” out of the eggs after the bleach solution was added; these were scored as embryonated diapause eggs because they appeared to be morphologically normal and did not hatch when induced with standard hatching cues twice. 
 
-The total number of hatched larvae and embryos could differ from the number of eggs initially counted on the paper for the following reasons: 1) presence of inviable eggs or larvae (i.e., eggs that fail to hatch due to developmental abnormalities or larvae that die before being counted), 2) loss of eggs while handling oviposition papers, or 3) inaccurate counting at any step of the scoring process. Based on the distribution of percent differences from the initial counts (Figure S1A), we considered oviposition papers with over 100% or less than 60% of the initial count to be less reliable data points. Excluding these data points resulted in 5 cages out of 286 in the total data set having less than 100 remaining eggs, so they were excluded from the photoperiod response curves. These filtering steps and exclusions did not affect CPP estimates for any population except PBS; for this population, excluding the unreliable counts eliminated an outlier in the photoperiod response curve and brought the CPP estimate into the range of CPP values for the rest of the populations (Figure S2). The final photoperiod response curves are shown in Figure S3.
+The total number of hatched larvae and embryos could differ from the number of eggs initially counted on the paper for the following reasons: 1) presence of inviable eggs or larvae (i.e., eggs that fail to hatch due to developmental abnormalities or larvae that die before being counted), 2) loss of eggs while handling oviposition papers, or 3) inaccurate counting at any step of the scoring process. Based on the distribution of percent differences from the initial counts (Figure S1A), we considered oviposition papers with more than 100% or less than 60% of the initial count to be less reliable data points; these papers made up less than 10% of both individual papers and total eggs quantified in the experiment. Excluding these data points resulted in 5 cages out of 286 in the total data set having less than 100 remaining eggs, so they were excluded from the photoperiod response curves. These filtering steps and exclusions did not affect CPP estimates for any population except PBS; for this population, excluding the unreliable counts eliminated an outlier in the photoperiod response curve and brought the CPP estimate into the range of CPP values for the rest of the populations (Figure S2). The final photoperiod response curves are shown in Figure S3.
 
 ```{r, echo=FALSE}
 yield_plot<-ggplot(blockAB, aes(x=TotalLarvaeEmbryos, y=yield)) + geom_point(alpha=0.5) + xlab("Number of viable eggs on oviposition paper") + ylab("Viable eggs/initial egg count on paper") + theme_bw()
@@ -479,6 +513,13 @@ quality_control_fig
 
 ```{r, echo=FALSE}
 DI_plot 
+```
+```{r}
+gdd_deadline_plots
+```
+```{r}
+plot_grid(ggplot(filter(gdd400_jp, only_2008=="n"), aes(x=year, y=gdd400, color=pop)) + geom_point() + geom_line() + theme_bw() + stat_smooth(method=lm, se=FALSE),ggplot(gdd400_us, aes(x=year, y=gdd400, color=pop)) + geom_point() + geom_line() + theme_bw() + stat_smooth(method=lm, se=FALSE), labels="AUTO")
+
 ```
 
 
