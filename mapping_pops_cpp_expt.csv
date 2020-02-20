@@ -1,31 +1,31 @@
-﻿pop,City,latitude,longitude,country,stage_sampled,only_2008
-PBS,"West Palm Beach, FL",26.67,-80.2,US,Larvae; Pupae,n
-FEM,"Vero Beach, FL",27.58,-80.4,US,Larvae; Pupae,n
-OAK,"Oak Hill, FL",28.85,-80.9,US,Larvae; Pupae,n
-JAC,"Jacksonville, FL",30.33,-81.8,US,Larvae; Pupae,n
-BRU,"Brunswick, GA",31.13,-81.5,US,Larvae; Pupae,n
-ZIO,"New Zion, SC",33.75,-80,US,Larvae; Pupae,n
-FAY,"Fayetteville, NC",35.03,-78.1,US,Larvae; Pupae,n
-NVA,"Henderson, NC",36.35,-78.4,US,Larvae; Pupae,n
-WAV,"Waverly, VA",37.05,-77.1,US,Larvae; Pupae,n
-MAN,"Manassas, VA",38.63,-77.4,US,Larvae; Pupae,n
-BER,"Sicklerville, NJ",39.77,-74.9,US,Larvae; Pupae,n
-NEW,"Jersey City, NJ",40.73,-74.1,US,Larvae; Pupae,n
-OKI,"Okinawa City, Okinawa",26.2,127.8,JP,????,n
-TAN,"Tanegashima City, Kagoshima",30.72,131,JP,,y
-KAG,"Kagoshima City, Kagoshima",31.6,130.6,JP,Larvae; Pupae,n
-YAT,"Yatsushiro, Kumamoto",32.65,130.6,JP,Larvae; Pupae,n
-SAG,Saga Prefecture,33.25,130.3,JP,Larvae; Pupae,n
-SHI,"Shimonoseki City, Yamaguchi",34.02,130.9,JP,,y
-YAM,Yamaguchi Prefecture,34.18,131.5,JP,Larvae; Pupae,n
-HIR,"Hiroshima City, Hiroshima",34.38,132.5,JP,,y
-KYO,Kyoto,35,135.8,JP,Larvae; Pupae,n
-TAK,"Takashima, Shiga",35.35,136,JP,Larvae; Pupae,n
-TOK,"Tokyo City, Tokyo",35.63,139.6,JP,,y
-UTS,"Utsunomiya City, Tochigi",36.53,139.9,JP,,y
-KAN,"Kanazawa, Ishikawa",36.56,136.7,JP,Adults,n
-KHO,"Koriyama City, Fukushima",37.37,140.4,JP,,y
-AIZ,"Aizuwakamatsu City, Fukushima",37.47,139.9,JP,,y
-NIG,"Niigata City, Niigata",37.91,139,JP,Adults,n
-SEN,"Sendai, Miyagi",38.29,140.9,JP,Larvae; Pupae,n
-SAK,"Sakata City, Yamagata",38.92,139.8,JP,,y
+﻿pop,City,latitude,longitude,country,generation,stage_sampled,only_2008
+PBS,"West Palm Beach, FL",26.67,-80.2,US,F3,Larvae; Pupae,n
+FEM,"Vero Beach, FL",27.58,-80.4,US,F3,Larvae; Pupae,n
+OAK,"Oak Hill, FL",28.85,-80.9,US,F3,Larvae; Pupae,n
+JAC,"Jacksonville, FL",30.33,-81.8,US,F3,Larvae; Pupae,n
+BRU,"Brunswick, GA",31.13,-81.5,US,F3,Larvae; Pupae,n
+ZIO,"New Zion, SC",33.75,-80,US,F3,Larvae; Pupae,n
+FAY,"Fayetteville, NC",35.03,-78.1,US,F3,Larvae; Pupae,n
+NVA,"Henderson, NC",36.35,-78.4,US,F3,Larvae; Pupae,n
+WAV,"Waverly, VA",37.05,-77.1,US,F3,Larvae; Pupae,n
+MAN,"Manassas, VA",38.63,-77.4,US,F3,Larvae; Pupae,n
+BER,"Sicklerville, NJ",39.77,-74.9,US,F3,Larvae; Pupae,n
+NEW,"Jersey City, NJ",40.73,-74.1,US,F3,Larvae; Pupae,n
+OKI,"Okinawa City, Okinawa",26.2,127.8,JP,F4,????,n
+TAN,"Tanegashima City, Kagoshima",30.72,131,JP,#N/A,,y
+KAG,"Kagoshima City, Kagoshima",31.6,130.6,JP,F4,Larvae; Pupae,n
+YAT,"Yatsushiro, Kumamoto",32.65,130.6,JP,F3,Larvae; Pupae,n
+SAG,Saga Prefecture,33.25,130.3,JP,F4,Larvae; Pupae,n
+SHI,"Shimonoseki City, Yamaguchi",34.02,130.9,JP,#N/A,,y
+YAM,Yamaguchi Prefecture,34.18,131.5,JP,F4,Larvae; Pupae,n
+HIR,"Hiroshima City, Hiroshima",34.38,132.5,JP,#N/A,,y
+KYO,Kyoto,35,135.8,JP,F4,Larvae; Pupae,n
+TAK,"Takashima, Shiga",35.35,136,JP,F3,Larvae; Pupae,n
+TOK,"Tokyo City, Tokyo",35.63,139.6,JP,#N/A,,y
+UTS,"Utsunomiya City, Tochigi",36.53,139.9,JP,#N/A,,y
+KAN,"Kanazawa, Ishikawa",36.56,136.7,JP,F3,Adults,n
+KHO,"Koriyama City, Fukushima",37.37,140.4,JP,#N/A,,y
+AIZ,"Aizuwakamatsu City, Fukushima",37.47,139.9,JP,#N/A,,y
+NIG,"Niigata City, Niigata",37.91,139,JP,F3,Adults,n
+SEN,"Sendai, Miyagi",38.29,140.9,JP,F3,Larvae; Pupae,n
+SAK,"Sakata City, Yamagata",38.92,139.8,JP,#N/A,,y

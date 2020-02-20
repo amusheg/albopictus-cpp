@@ -273,7 +273,7 @@ gdd_deadline_plots<-ggplot(filter(gdd400_all, only_2008=="n", year!=2018), aes(x
 ```{r echo=FALSE, include=FALSE}
 #adding 2008 and 2018 CPP values 
 cpp_year<-dplyr::select(read.csv("cpp_calcs_filtered.csv"), pop, Estimate, year) %>% filter(year!="1988") %>% rename("CPP_YEAR"="year")
-gdd400_all_new<-left_join(gdd400_all, cpp_year, by="pop")
+gdd400_all_new<-left_join(gdd400_all, cpp_year, by=c("pop"))
 gdd400_all_new$CPP_YEAR<-as.factor(gdd400_all_new$CPP_YEAR)
 
 gdd_all_new<-left_join(gdd_all, cpp_year, by="pop")
@@ -472,7 +472,7 @@ cpp_08_18_shifts_bw
 kable(prettify(anova(cppmodel)), digits=3, caption="Table 3: Effects of latitude, country and year on critical photoperiod in 2008 and 2018.")
 ```
 
-We reasoned that the optimal time for entering diapause depended on the amount of time required to complete a full generation under particular climatic conditions. Insect phenology studies often estimate generation times using growing degree day (GDD) models. Based on a survey of literature of Aedes albopictus growth rates under various temperature conditions, we estimated that a mosquito generation - from the egg stage through ovipostion - required 400-465 GDD. We used climate records over the past 20 years from our sampling locations to calculate a yearly GDD-based "deadline" for diapause at each location: the date after which eggs laid would not have enough growing degree days left in the year to complete another generation. 
+We reasoned that the optimal time for entering diapause depended on the amount of time required to complete a full generation under particular climatic conditions. Insect phenology studies often estimate generation times using growing degree day (GDD) models, which take advantage of the fact that insect development time is linearly temperature-dependent under moderate climate conditions. Based on a survey of literature of Aedes albopictus growth rates under various temperature conditions, we estimated that a mosquito generation - from the egg stage through ovipostion - required 400-465 growing degree-days. We used climate records over the past 20 years from our sampling locations to calculate a yearly GDD-based "deadline" for diapause at each location: the date after which eggs laid would not have enough growing degree days left in the year to complete another generation. 
 
 Although field data about Aedes albopictus diapause egg production are scarce, we were able to use field observations collected in 2015 at site in Washington, DC, USA as preliminary verification of the GDD approach. Briefly, oviposition cups were placed outdoors and Aedes albopictus eggs collected weekly were scored for diapause incidence using the same methods described here. The diapause incidence curve (Fig S) was used to determine the critical date at which the majority of eggs produced by wild mosquitoes were in diapause. The critical date occurred during the week of September 7, 2015, corresponding to ordinal day 250. The calculated deadline for Manassas, VA (~50 km from DC) in 2015 was 256-263. In 2014, the calculated deadline was 247-252. These results confirmed that GDD deadlines broadly correspond to field observations and suggested that examining the GDD deadline in years preceding the collection year is a reasonable approach.
 
@@ -484,16 +484,21 @@ We examined the relationship between critical photoperiod and two GDD deadline v
 gdd_cpp_plot
 ```
 
+
+
+
 ```{r echo=FALSE}
-kable(rbind(prettify(anova(model1)), prettify(anova(model2)), prettify(anova(model3)), prettify(anova(model4))), digits=3)  
+kable(rbind(prettify(anova(model2)), prettify(anova(model1)), prettify(anova(model4)), prettify(anova(model3))), digits=3)  
 ```
+
+
 ```{r echo=FALSE}
 prev_year_plots
 ```
 
 ```{r echo=FALSE}
-kable(prettify(anova(all_prevyear_model))) 
-kable(prettify(anova(all_previnterval_model)))
+kable(prettify(anova(all_prevyear_model)), digits=3) 
+kable(prettify(anova(all_previnterval_model)), digits=3)
 
 ```
 
@@ -520,7 +525,7 @@ Oviposition papers were trimmed to a ~2 cm strip surrounding the former location
 
 After eggs were bleached, presence of pharate larvae was determined using the diagnostic criteria of visible eye spots and abdominal segmentation. On some oviposition papers, larvae “hatched” out of the eggs after the bleach solution was added; these were scored as embryonated diapause eggs because they appeared to be morphologically normal and did not hatch when induced with standard hatching cues twice. 
 
-The total number of hatched larvae and embryos could differ from the number of eggs initially counted on the paper for the following reasons: 1) presence of inviable eggs or larvae (i.e., eggs that fail to hatch due to developmental abnormalities or larvae that die before being counted), 2) loss of eggs while handling oviposition papers, or 3) inaccurate counting at any step of the scoring process. Based on the distribution of percent differences from the initial counts (Figure S1A), we considered oviposition papers with more than 100% or less than 60% of the initial count to be less reliable data points; these papers made up less than 10% of both individual papers and total eggs quantified in the experiment. Excluding these data points resulted in 5 cages out of 286 in the total data set having less than 100 remaining eggs, so they were excluded from the photoperiod response curves. These filtering steps and exclusions did not affect CPP estimates for any population except PBS; for this population, excluding the unreliable counts eliminated an outlier in the photoperiod response curve and brought the CPP estimate into the range of CPP values for the rest of the populations (Figure S2). The final photoperiod response curves are shown in Figure S3.
+The total number of hatched larvae and embryos could differ from the number of eggs initially counted on the paper for the following reasons: 1) presence of inviable eggs or larvae (i.e., eggs that fail to hatch due to developmental abnormalities or larvae that die before being counted), 2) loss of eggs while handling oviposition papers, or 3) inaccurate counting at any step of the scoring process. Based on the distribution of percent differences from the initial counts (Figure S1A), we considered oviposition papers with more than 100% or less than 60% of the initial count to be less reliable data points; these papers made up less than 10% of both individual papers and total eggs quantified in the experiment. Excluding these data points resulted in 5 cages out of 286 in the total data set (1.7%) having less than 100 remaining eggs, so they were excluded from the photoperiod response curves. These filtering steps and exclusions did not affect CPP estimates for any population except PBS; for this population, excluding the unreliable counts eliminated an outlier in the photoperiod response curve and brought the CPP estimate into the range of CPP values for the rest of the populations (Figure S2). The final photoperiod response curves are shown in Figure S3.
 
 ```{r, echo=FALSE}
 yield_plot<-ggplot(blockAB, aes(x=TotalLarvaeEmbryos, y=yield)) + geom_point(alpha=0.5) + xlab("Number of viable eggs on oviposition paper") + ylab("Viable eggs/initial egg count on paper") + theme_bw()
@@ -543,13 +548,19 @@ quality_control_fig
 ```{r, echo=FALSE}
 DI_plot 
 ```
+```{r echo=FALSE, warning=FALSE}
+field_data_plot
+```
+
+
 ```{r echo=FALSE}
 gdd_deadline_plots
 ```
 ```{r echo=FALSE}
-plot_grid(ggplot(filter(gdd400_jp, only_2008=="n"), aes(x=year, y=gdd400, color=pop)) + geom_point() + geom_line() + theme_bw() + stat_smooth(method=lm, se=FALSE),ggplot(gdd400_us, aes(x=year, y=gdd400, color=pop)) + geom_point() + geom_line() + theme_bw() + stat_smooth(method=lm, se=FALSE), labels="AUTO")
+plot_grid(ggplot(filter(gdd400_jp, only_2008=="n"), aes(x=year, y=gdd400, color=pop)) + geom_point() + geom_line() + theme_bw() + stat_smooth(method=lm, se=FALSE) + xlab("Year") + ylab("GDD Deadline"),ggplot(gdd400_us, aes(x=year, y=gdd400, color=pop)) + geom_point() + geom_line() + theme_bw() + stat_smooth(method=lm, se=FALSE) + xlab("Year") + ylab("GDD Deadline"), labels="AUTO")
 
 ```
+
 ```{r echo=FALSE, warning=FALSE}
 gdd_by_interval<-ggplot(filter(interval_summaries, CPP_YEAR==2018), aes(x=latitude, y=gdd400_mean, fill=country, shape=interval)) + 
   geom_point(size=3) + scale_fill_manual(values=c("black", "gray"), name="Country") + scale_shape_manual(values=c(21,24), name="Period") + geom_errorbar(aes(ymin=gdd400_mean-gdd400_sd, ymax=gdd400_mean+gdd400_sd, color=country)) +
