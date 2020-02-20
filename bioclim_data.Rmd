@@ -1,0 +1,28 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+```{r}
+install.packages("raster")
+install.packages("sp")
+```
+
+```{r}
+library("tidyverse")
+library("raster")
+library("sp")
+```
+
+```{r}
+#Download worldclim data 
+clim = getData('worldclim', var='bio', res=2.5) 
+gain(clim) = 0.1
+```
+
+
+```{r}
+#look up SpatialPoints 
+# https://gis.stackexchange.com/questions/227585/using-r-to-extract-data-from-worldclim
+```
+
