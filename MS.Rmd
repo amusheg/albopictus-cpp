@@ -45,6 +45,7 @@ library("scatterpie")
 library("ggedit")
 library("ggrepel")
 library("cowplot")
+library("ggrepel")
 ```
 
 ```{r setup, include=FALSE}
@@ -196,6 +197,10 @@ write_csv(DI_short_2, "diapause_incidence_8h_2008_2018.csv")
 ```{r dimodel, echo=FALSE, include=FALSE}
 dimodel<-lm(DI~lat*country*year, data=DI_short_2)
 dimodel_result<-data.frame(anova(dimodel))
+#checking for normality of residuals
+dimodel.stdres<-rstandard(dimodel)
+qqnorm(dimodel.stdres, ylab="Standardized Residuals", xlab="Normal Scores", main="Normal Probability Plot")
+qqline(dimodel.stdres)
 ```
 
 ```{r maps, echo=FALSE, include=FALSE}
@@ -224,12 +229,12 @@ remove_geom(japan_map, "label") %>% remove_geom("point") + ylim(24,48) + geom_sc
 
 #bw locations map
 us_map_bw<-ggplot() + geom_polygon(data = usa, aes(x=long, y = lat, group=group), fill=NA, color="black") + 
-  coord_fixed(1.3) + geom_point(data = filter(pops, country=="US"), aes(x = longitude, y = latitude), size = 1) + xlim(c(-87, -65)) + ylim(c(24,48)) +
-  geom_label(data=filter(pops, country=="US"), aes(x=longitude, y=latitude, label=pop), hjust=0, label.padding=unit(0.1, "lines")) + theme_bw() + xlab("") + ylab("Latitude")
+  coord_fixed(1.3) + geom_point(data = filter(pops, country=="US"), aes(x = longitude, y = latitude), size = 2) + xlim(c(-87, -65)) + ylim(c(24,48)) +
+  geom_label_repel(data=filter(pops, country=="US"), aes(x=longitude, y=latitude, label=pop), hjust=0, label.padding=unit(0.1, "lines"), nudge_x=1.5) + theme_bw() + xlab("") + ylab("")
 
 japan_map_bw<-ggplot() + geom_polygon(data = jp, aes(x=long, y = lat, group=group), fill=NA, color="black") + 
-  coord_fixed(1.3) + geom_point(data = filter(pops, country=="JP", only_2008=="n"), aes(x = longitude, y = latitude), size = 1)  + xlim(c(125, 147)) + ylim(c(24,48)) +
-  geom_label_repel(data=filter(pops, country=="JP", only_2008=="n"), aes(x=longitude, y=latitude, label=pop), hjust=0, label.padding=unit(0.1, "lines")) + theme_bw()  + xlab("") + ylab("")
+  coord_fixed(1.3) + geom_point(data = filter(pops, country=="JP", only_2008=="n"), aes(x = longitude, y = latitude), size = 2)  + xlim(c(125, 147)) + ylim(c(24,48)) +
+  geom_label_repel(data=filter(pops, country=="JP", only_2008=="n"), aes(x=longitude, y=latitude, label=pop), hjust=0, label.padding=unit(0.1, "lines"), nudge=-4) + theme_bw()  + xlab("") + ylab("Latitude")
 
 map_panels_bw<-plot_grid(japan_map_bw, us_map_bw)
 ```
@@ -409,7 +414,7 @@ map_panels_bw
 
 
 ```{r table1, echo=FALSE}
-kable(filter(pops, only_2008=="n")[,1:6], col.names=c("Population", "City", "Latitude", "Longitude", "Country", "Life Stage Sampled"), caption="Table 1: 2018 Sampling Locations")
+kable(filter(pops, only_2008=="n")[,1:7], col.names=c("Population", "City", "Latitude", "Longitude", "Country", "Generation*", "Life Stage Sampled"), caption="Table 1: 2018 Sampling Locations")
 ```
 
 Populations were maintained in the laboratory for 3 or 4 generations prior to the experiment at 21C and 80% relative humidity under a 16:8h light:dark cycle, following previous studies [@armbrusterGeographicVariationLarval2006; @urbanskiRapidAdaptiveEvolution2012]. Larvae were reared in distilled water and fed a slurry of dog food and brine shrimp. Adults were provided organic raisins as a carbohydrate source and blood meals from a human host. Initial laboratory generations of larvae were reared in plastic storage containers containing ~2.5 L of distilled water, with one population per container at initial densities of ~200-300, for ease of bulk rearing. Pupae were then transferred into one adult cage per population. Populations generally had at least 50 female and 50 male adults per generation, but the JAC population experienced visibly high mortality during the F2 generation. The larval generation immediately prior to the experiment was reared in 15 cm plastic petri dishes containing 30-40 larvae each, 10 dishes per population, to match the larval rearing conditions of the experimental generation, which followed the methods of Urbanski et al 2012. Additional details of mosquito husbandry prior to the experiment can be found in Supplementary File 1. 
@@ -452,7 +457,7 @@ country_DI_bw<-ggplot(filter(DI_short_2, year!=1988), aes(x=lat, y=DI, fill=coun
 country_DI_bw
 ```
 ```{r echo=FALSE, warning=FALSE}
-ggplot(filter(DI_short_2, year!=1988), aes(x=lat, y=DI, fill=country, shape=year)) + scale_fill_manual(values=c("black","gray"), name="Country") + scale_shape_manual(values=c(21,24), name="Year") + geom_point(size=3) + theme_bw() + theme(legend.position=c(0.9,0.3), text=element_text(size=12)) + guides(fill = guide_legend(override.aes=list(shape=22))) + xlab("Latitude") + ylab("Short-day diapause incidence") + geom_smooth(aes(linetype=year, color=country), se=FALSE, method="glm", method.args=list(family="binomial")) + scale_linetype_manual(values=c("dotted","solid"), name="Year") + scale_color_manual(values=c("black","gray"), name="Country")
+di_plot_binomial<-ggplot(filter(DI_short_2, year!=1988), aes(x=lat, y=DI, fill=country, shape=year)) + scale_fill_manual(values=c("black","gray"), name="Country") + scale_shape_manual(values=c(21,24), name="Year") + geom_point(size=3) + theme_bw() + theme(legend.position=c(0.9,0.3), text=element_text(size=12)) + guides(fill = guide_legend(override.aes=list(shape=22))) + xlab("Latitude") + ylab("Short-day diapause incidence") + geom_smooth(aes(linetype=year, color=country), se=FALSE, method="glm", method.args=list(family="binomial")) + scale_linetype_manual(values=c("dotted","solid"), name="Year") + scale_color_manual(values=c("black","gray"), name="Country")
 
 ```
 
