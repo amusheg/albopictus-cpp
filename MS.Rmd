@@ -269,7 +269,6 @@ gdd_all<-left_join(gdd400_all, gdd465_all)
 gdd_all$gdd<-(gdd_all$gdd400 + gdd_all$gdd465)/2
 ```
 
-
 ```{r, echo=FALSE, include=FALSE}
 gdd_deadline_plots<-ggplot(filter(gdd400_all, only_2008=="n", year!=2018), aes(x=latitude, y=gdd400, fill=country)) + scale_fill_manual(values=c("black", "gray"), name="Country") + geom_point(shape=21) + facet_wrap(~year) + xlab("Latitude") + ylab("GDD Deadline (ordinal day)") + theme_bw() + theme(legend.position="bottom")
 
