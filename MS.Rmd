@@ -18,7 +18,6 @@ bibliography: MyLibrary.bib
 install.packages("tidyverse") #1.2.1
 install.packages("drc") #3.0.1
 install.packages("stringr")
-install.packages("geosphere")
 install.packages("lubridate")
 install.packages(c("maps", "mapdata"))
 devtools::install_github("dkahle/ggmap")
@@ -28,6 +27,8 @@ install.packages("ggrepel")
 install.packages("papeR")
 install.packages("cowplot")
 install.packages("flextable")
+install.packages("stats")
+install.packages("ggbiplot")
 ```
 
 ```{r message=FALSE, echo=FALSE, include=FALSE}
@@ -41,11 +42,13 @@ library("geosphere") #1.5.10
 library("lubridate") #1.7.4
 library("maps")
 library("mapdata")
-library("scatterpie")
 library("ggedit")
 library("ggrepel")
 library("cowplot")
 library("ggrepel")
+library("stats")
+library("ggbiplot")
+
 ```
 
 ```{r setup, include=FALSE}
@@ -140,47 +143,46 @@ colnames(cpp_2008)[colnames(cpp_2008)=="Std..Error"] <- "StdError"
 popdata_2008<-DI_summary_2008 %>% group_by(pop) %>% 
   dplyr::summarize(country=first(country), lat=first(lat), year=first(year)) 
 cpp_2008<-right_join(cpp_2008, popdata_2008, by="pop")
+#1988 data not used in present study but can load it anyway
 cpp_1988<-data.frame(read.csv("CPP_1988.csv")) 
 cpp_1988$pop<-na_if(cpp_1988$pop, "NA")
 cpp_1988$StdError<-na_if(cpp_1988$StdError, "NA")
-cpp_2<-rbind(cpp_1988, cpp_2008, cpp_2018) 
-write.csv(cpp_2, "cpp_calcs_filtered.csv")
-```
 
-```{r Japan_US_years, echo=FALSE, include=FALSE}
-cpp_japan_us_years<-ggplot(cpp_2, aes(x=lat, y=Estimate, fill=year, color=year)) + 
-  scale_color_manual(values=c("white","gray","black")) + 
-  scale_fill_manual(values=c("white","gray","black"))+ 
-  geom_point(shape=21, color="black") + 
-  geom_errorbar(aes(ymin=Estimate-StdError, ymax=Estimate+StdError), na.rm=TRUE) + 
-  facet_grid(~country) + stat_smooth(method=lm, se=FALSE)
+#2008 and 2018 data
+cpp_all<-rbind(cpp_2008, cpp_2018) 
+write.csv(cpp_all, "cpp_calcs_filtered.csv")
 ```
 
 ```{r cppmodel, echo=FALSE, include=FALSE}
-cppmodel<-lm(Estimate~lat*country*year, data=filter(cpp_2, year!=1988))
+cppmodel<-lm(Estimate~lat*country*year, data=cpp_all)
 cppmodel_result<-data.frame(anova(cppmodel))
 ```
 
 ```{r, echo=FALSE, include=FALSE}
-ggplot(cpp_2, aes(x=lat, y=Estimate, color=country)) + 
+#basic breakdown
+ggplot(cpp_all, aes(x=lat, y=Estimate, color=country)) + 
   geom_point() + 
   geom_errorbar(aes(ymin=Estimate-StdError, ymax=Estimate+StdError), na.rm=TRUE) + 
   facet_grid(~year) + stat_smooth(method=lm, se=FALSE)
 ```
 
 ```{r, echo=FALSE, include=FALSE}
-cpp_08_18_shifts<-ggplot(filter(cpp_2, year!=1988), aes(x=lat, y=Estimate, color=country, shape=year)) + 
-  geom_point(size=3) + scale_color_manual(values=c("red", "blue")) +
-  stat_smooth(method=lm, se=FALSE, aes(linetype=year)) + scale_linetype_manual(values=c("dotted","solid")) + theme_bw() + theme(legend.position=c(.8,.25)) + xlab("Latitude") + ylab("Critical photoperiod")
-  # + geom_errorbar(aes(ymin=Estimate-StdError, ymax=Estimate+StdError), na.rm=TRUE) 
-
-cpp_08_18_shifts_bw<-ggplot(filter(cpp_2, year!=1988), aes(x=lat, y=Estimate, fill=country, shape=year)) + 
+#MAIN FIGURE VERSIONS
+cpp_08_18_shifts_bw<-ggplot(cpp_all, aes(x=lat, y=Estimate, fill=country, shape=year)) + 
   geom_point(size=3) + scale_fill_manual(values=c("black", "gray"), name="Country") + scale_shape_manual(values=c(21,24), name="Year") +
   stat_smooth(method=lm, se=FALSE, aes(linetype=year, color=country)) + scale_linetype_manual(values=c("dotted","solid"), name="Year") + 
   scale_color_manual(values=c("black","gray"), name="Country") +
   guides(fill=guide_legend(override.aes=list(shape=22)), linetype=guide_legend(override.aes=list(color="black")),
   color=guide_legend(override.aes=list(linetype=0)), color=guide_legend(override.aes=list(linetype=0)), linetype=guide_legend(legend.key.width=unit(3,"line"))) +
   theme_bw() + theme(legend.position=c(.8,.25), text=element_text(size=12)) + xlab("Latitude") + ylab("Critical photoperiod (h)")
+
+#version with only one shape, gray/black for years
+ggplot(cpp_all, aes(x=lat, y=Estimate, alpha=year, fill=country)) +
+  geom_point(size=3, shape=21, stroke=1) + scale_fill_manual(values=c("white", "black"), name="Country") +
+  scale_alpha_manual(values=c(0.3, 1), name="Year") +
+  stat_smooth(method=lm, se=FALSE, aes(linetype=country, color=year)) + scale_color_manual(values=c("gray", "black"), name="Year") +  scale_linetype_manual(values=c("dotted","solid"), name="Country") + 
+  theme_bw() + theme(legend.position=c(.8,.25), text=element_text(size=12)) + xlab("Latitude") + ylab("Critical photoperiod (h)") + guides(linetype=guide_legend(override.aes=list(color="black"), legend.key.width=unit(5,"line")))
+
 ```
 
 ```{r incidence_lat_year, echo=FALSE, include=FALSE}
@@ -195,12 +197,25 @@ write_csv(DI_short_2, "diapause_incidence_8h_2008_2018.csv")
 ```
 
 ```{r dimodel, echo=FALSE, include=FALSE}
+#DI by lat/country/year comparison
+dimodel_poly_us<-lm(DI~lat^2 + lat, data=filter(DI_short_2, country=="US"))
+dimodel_lat_us<-lm(DI~lat, data=filter(DI_short_2, country=="US"))
 dimodel<-lm(DI~lat*country*year, data=DI_short_2)
 dimodel_result<-data.frame(anova(dimodel))
 #checking for normality of residuals
 dimodel.stdres<-rstandard(dimodel)
 qqnorm(dimodel.stdres, ylab="Standardized Residuals", xlab="Normal Scores", main="Normal Probability Plot")
 qqline(dimodel.stdres)
+
+
+#Spearman rank correlation coefficients
+cor.test(filter(DI_short_2, country=="US", year==2018)$lat, filter(DI_short_2, country=="US", year==2018)$DI, alternative="two.sided", method="spearman")
+cor.test(filter(DI_short_2, country=="JP", year==2018)$lat, filter(DI_short_2, country=="JP", year==2018)$DI, alternative="two.sided", method="spearman")
+
+
+
+wilcox.test(filter(DI_short_2, country=="US", year==2018, pop!="PBS")$DI, (filter(DI_short_2, country=="US", year==2008) %>% arrange(lat))$DI, paired=FALSE)
+
 ```
 
 ```{r maps, echo=FALSE, include=FALSE}
@@ -215,17 +230,6 @@ japan_map<-ggplot() + geom_polygon(data = jp, aes(x=long, y = lat, group=group),
   coord_fixed(1.3) + geom_point(data = filter(pops, country=="JP", only_2008=="n"), aes(x = longitude, y = latitude), size = 1)  + xlim(c(125, 147)) +
   geom_label_repel(data=filter(pops, country=="JP", only_2008=="n"), aes(x=longitude, y=latitude, label=pop), hjust=0, label.padding=unit(0.1, "lines")) +
   theme_bw() + theme(axis.title.x=element_blank(), axis.title.y=element_blank())
-DI_data<-data.frame(read.csv("diapause_incidence_8h_2008_2018.csv"))
-DI_data$ND<-1-DI_data$DI
-DI_info<-full_join(DI_data, pops)
-DI_info<-rename(DI_info, Diapause=DI, Nondiapause=ND)
-us_DI_pies<-remove_geom(us_map, "label") + geom_scatterpie(data=filter(DI_info, country=="US"), aes(x=longitude, y=latitude, r=0.5), cols=c("Diapause", "Nondiapause")) + facet_grid(~year) + theme(axis.title.x=element_blank(), axis.title.y=element_blank())
-jp_DI_pies<-remove_geom(japan_map, "label") + geom_scatterpie(data=filter(DI_info, country=="JP"), aes(x=longitude, y=latitude, r=0.5), cols=c("Diapause", "Nondiapause")) + 
-  facet_grid(~year) + theme(axis.title.x=element_blank(), axis.title.y=element_blank())
-DI_pies_2018<-plot_grid(remove_geom(us_map, "label") %>% remove_geom("point") + ylim(24,48) + geom_scatterpie(data=filter(DI_info, country=="US", year=="2018"), aes(x=longitude, y=latitude, r=.7, alpha=0.95), cols=c("Diapause", "Nondiapause")) + scale_fill_manual(values=c("black","white")) + theme(axis.title.x=element_blank(), axis.text.x=element_blank(), axis.ticks.x=element_blank(), axis.title.y=element_blank(), legend.position="none", plot.margin = unit(c(0, 0, 0, 0), "null")), 
-                        
-remove_geom(japan_map, "label") %>% remove_geom("point") + ylim(24,48) + geom_scatterpie(data=filter(DI_info, country=="JP", year=="2018"), aes(x=longitude, y=latitude, r=.7, alpha=0.95), cols=c("Diapause", "Nondiapause")) + scale_fill_manual(values=c("black","white")) + theme(axis.title.x=element_blank(), axis.text.x=element_blank(), axis.ticks.x=element_blank(), axis.title.y=element_blank(), legend.position="none", plot.margin = unit(c(0, 0, 0, 0), "null")), ncol=2, align="hv")
-
 
 #bw locations map
 us_map_bw<-ggplot() + geom_polygon(data = usa, aes(x=long, y = lat, group=group), fill=NA, color="black") + 
@@ -240,7 +244,7 @@ map_panels_bw<-plot_grid(japan_map_bw, us_map_bw)
 ```
 
 ```{r, echo=FALSE, include=FALSE}
-#GDD deadline data
+#GDD 400 deadline data
 #importing and reshaping table
 gdd400_us <- read.csv("GDD400_US.csv", check.names=FALSE) %>% gather(year, gdd400, "1998":"2018", factor_key=FALSE)
 gdd400_us$year<-as.numeric(gdd400_us$year)
@@ -254,31 +258,33 @@ gdd400_all<-rbind(gdd400_us, gdd400_jp)
 gdd400_all$pop<-as.factor(gdd400_all$pop)
 gdd400_all<-mutate(gdd400_all, interval=case_when(year<=2017 & year>=2008 ~ 'y2008-2017',
                                                   year<2008 ~ 'y1998-2007'))
-```
 
-```{r, echo=FALSE, include=FALSE}
-#GDD deadline data
-#importing and reshaping table
 gdd465_us <- read.csv("GDD465_US.csv", check.names=FALSE) %>% gather(year, gdd465, "1998":"2018", factor_key=FALSE)
 gdd465_us$year<-as.numeric(gdd465_us$year)
 gdd465_jp <- read.csv("GDD465_JP.csv", check.names=FALSE) %>% gather(year, gdd465, "1998":"2018", factor_key=FALSE)
 gdd465_jp$year<-as.numeric(gdd465_jp$year)
+locations<-read.csv("mapping_pops_cpp_expt.csv")
+gdd465_us<-left_join(gdd465_us, dplyr::select(locations, pop, latitude, country, only_2008), by=c("pop"))
+gdd465_jp<-left_join(gdd465_jp, dplyr::select(locations, pop, latitude, country, only_2008), by=c("pop"))
 gdd465_all<-rbind(gdd465_us, gdd465_jp)
 gdd465_all$pop<-as.factor(gdd465_all$pop)
+gdd465_all<-mutate(gdd465_all, interval=case_when(year<=2017 & year>=2008 ~ 'y2008-2017',
+                                                  year<2008 ~ 'y1998-2007'))
 gdd_all<-left_join(gdd400_all, gdd465_all)
 gdd_all$gdd<-(gdd_all$gdd400 + gdd_all$gdd465)/2
+
 ```
 
 ```{r, echo=FALSE, include=FALSE}
-gdd_deadline_plots<-ggplot(filter(gdd400_all, only_2008=="n", year!=2018), aes(x=latitude, y=gdd400, fill=country)) + scale_fill_manual(values=c("black", "gray"), name="Country") + geom_point(shape=21) + facet_wrap(~year) + xlab("Latitude") + ylab("GDD Deadline (ordinal day)") + theme_bw() + theme(legend.position="bottom")
+gdd_deadline_plots<-ggplot(filter(gdd465_all, only_2008=="n", year!=2018), aes(x=latitude, y=gdd465, fill=country)) + scale_fill_manual(values=c("black", "gray"), name="Country") + geom_point(shape=21) + facet_wrap(~year) + xlab("Latitude") + ylab("GDD Deadline (ordinal day)") + theme_bw() + theme(legend.position="bottom")
 
 ```
 
 ```{r echo=FALSE, include=FALSE}
 #adding 2008 and 2018 CPP values 
-cpp_year<-dplyr::select(read.csv("cpp_calcs_filtered.csv"), pop, Estimate, year) %>% filter(year!="1988") %>% rename("CPP_YEAR"="year")
-gdd400_all_new<-left_join(gdd400_all, cpp_year, by=c("pop"))
-gdd400_all_new$CPP_YEAR<-as.factor(gdd400_all_new$CPP_YEAR)
+cpp_year<-dplyr::select(read.csv("cpp_calcs_filtered.csv"), pop, Estimate, year) %>% dplyr::rename("CPP_YEAR"="year")
+gdd465_all_new<-left_join(gdd465_all, cpp_year, by=c("pop"))
+gdd465_all_new$CPP_YEAR<-as.factor(gdd465_all_new$CPP_YEAR)
 
 gdd_all_new<-left_join(gdd_all, cpp_year, by="pop")
 gdd_all_new$CPP_YEAR<-as.factor(gdd_all_new$CPP_YEAR)
@@ -288,19 +294,19 @@ gdd_all_new$CPP_YEAR<-as.factor(gdd_all_new$CPP_YEAR)
 
 ```{r echo=FALSE, include=FALSE}
 #GDD deadlines averaged across all years
-gdd_summaries<-gdd_all_new %>% filter(interval!="NA") %>% group_by(pop) %>% dplyr::summarise(gdd400_mean=mean(gdd400), gdd400_sd=sd(gdd400), gdd465_mean=mean(gdd465), gdd465_sd=sd(gdd465), latitude=mean(latitude), country=first(country), only_2008=first(only_2008))
+gdd_summaries<-gdd_all_new %>% filter(interval!="NA") %>% group_by(pop) %>% dplyr::summarise(gdd465_mean=mean(gdd465), gdd465_sd=sd(gdd465), gdd465_mean=mean(gdd465), gdd465_sd=sd(gdd465), latitude=mean(latitude), country=first(country), only_2008=first(only_2008))
 
-lat_gdd_average<-ggplot(filter(gdd_summaries, only_2008=="n"), aes(x=latitude, y=gdd400_mean, fill=country)) + geom_point(shape=21) + scale_fill_manual(values=c("black", "gray")) + geom_errorbar(aes(ymin=gdd400_mean-gdd400_sd, ymax=gdd400_mean+gdd400_sd, color=country)) + scale_color_manual(values=c("black","gray")) + theme_bw() + theme(legend.position="bottom") + xlab("Latitude (N)") + ylab("GDD Deadline (ordinal day)")
+lat_gdd_average<-ggplot(filter(gdd_summaries, only_2008=="n"), aes(x=latitude, y=gdd465_mean, fill=country)) + geom_point(shape=21) + scale_fill_manual(values=c("black", "gray")) + geom_errorbar(aes(ymin=gdd465_mean-gdd465_sd, ymax=gdd465_mean+gdd465_sd, color=country)) + scale_color_manual(values=c("black","gray")) + theme_bw() + theme(legend.position="bottom") + xlab("Latitude (N)") + ylab("GDD Deadline (ordinal day)")
 
 ```
 
 ```{r echo=FALSE, include=FALSE}
 #plotting GDD deadlines and CPP
-gdd_08 <- ggplot(filter(gdd400_all_new, year==2007, CPP_YEAR==2008), aes(x=gdd400, y=Estimate, fill=country)) + scale_fill_manual(values=c("black","gray"), name="Country") + geom_point(size=3, shape=21) + stat_smooth(method=lm, se=FALSE, aes(color=country)) + scale_color_manual(values=c("black","gray"), name="Country") +
+gdd_08 <- ggplot(filter(gdd465_all_new, year==2007, CPP_YEAR==2008), aes(x=gdd465, y=Estimate, fill=country)) + scale_fill_manual(values=c("black","gray"), name="Country") + geom_point(size=3, shape=21) + stat_smooth(method=lm, se=FALSE, aes(color=country)) + scale_color_manual(values=c("black","gray"), name="Country") +
   theme_bw() + theme(legend.position="none", text=element_text(size=12)) +
   xlab("GDD Deadline (ordinal day), 2007") + ylab("Critical photoperiod (h), 2008") + ylim(12.3,14.2)
 
-gdd_18 <- ggplot(filter(gdd400_all_new, year==2017, CPP_YEAR==2018), aes(x=gdd400, y=Estimate, fill=country)) + scale_fill_manual(values=c("black","gray"), name="Country") + geom_point(size=3, shape=21) + stat_smooth(method=lm, se=FALSE, aes(color=country)) + scale_color_manual(values=c("black","gray"), name="Country") +
+gdd_18 <- ggplot(filter(gdd465_all_new, year==2017, CPP_YEAR==2018), aes(x=gdd465, y=Estimate, fill=country)) + scale_fill_manual(values=c("black","gray"), name="Country") + geom_point(size=3, shape=21) + stat_smooth(method=lm, se=FALSE, aes(color=country)) + scale_color_manual(values=c("black","gray"), name="Country") +
 theme_bw() + theme(legend.position=c(.8,.8), text=element_text(size=12)) +
 xlab("GDD Deadline (ordinal day), 2017") + ylab("Critical photoperiod (h), 2018") + ylim(12.3, 14.2)
 
@@ -308,11 +314,11 @@ xlab("GDD Deadline (ordinal day), 2017") + ylab("Critical photoperiod (h), 2018"
 
 ```{r echo=FALSE, include=FALSE}
 #plotting CPP by GDD deadlines averaged over intervals
-interval_summaries<-gdd_all_new %>% filter(interval!="NA") %>% group_by(pop, interval, CPP_YEAR) %>% dplyr::summarise(gdd400_mean=mean(gdd400), gdd400_sd=sd(gdd400), cpp=mean(Estimate), latitude=mean(latitude), country=first(country), only_2008=first(only_2008))
+interval_summaries<-gdd_all_new %>% filter(interval!="NA") %>% group_by(pop, interval, CPP_YEAR) %>% dplyr::summarise(gdd465_mean=mean(gdd465), gdd465_sd=sd(gdd465), cpp=mean(Estimate), latitude=mean(latitude), country=first(country), only_2008=first(only_2008))
 
-gdd_cpp_interval_18<-ggplot(filter(interval_summaries, interval=="y2008-2017", CPP_YEAR==2018), aes(x=gdd400_mean, y=cpp, fill=country)) + geom_point(size=3, shape=21) + scale_fill_manual(values=c("black","gray"), name="Country") + stat_smooth(method=lm, se=FALSE, aes(color=country)) + scale_color_manual(values=c("black", "gray"), name="Country") + theme_bw() + theme(legend.position="none", text=element_text(size=12)) + xlab("Mean GDD deadline, 2008-2017 (ordinal day)") + ylab("Critical photoperiod, 2018 (h)") + ylim(12.3, 14.2)
+gdd_cpp_interval_18<-ggplot(filter(interval_summaries, interval=="y2008-2017", CPP_YEAR==2018), aes(x=gdd465_mean, y=cpp, fill=country)) + geom_point(size=3, shape=21) + scale_fill_manual(values=c("black","gray"), name="Country") + stat_smooth(method=lm, se=FALSE, aes(color=country)) + scale_color_manual(values=c("black", "gray"), name="Country") + theme_bw() + theme(legend.position="none", text=element_text(size=12)) + xlab("Mean GDD deadline, 2008-2017 (ordinal day)") + ylab("Critical photoperiod, 2018 (h)") + ylim(12.3, 14.2)
 
-gdd_cpp_interval_08<-ggplot(filter(interval_summaries, interval=="y1998-2007", CPP_YEAR==2008), aes(x=gdd400_mean, y=cpp, fill=country)) + geom_point(size=3, shape=21) + scale_fill_manual(values=c("black","gray"), name="Country") + stat_smooth(method=lm, se=FALSE, aes(color=country)) + scale_color_manual(values=c("black", "gray"), name="Country") + theme_bw() + theme(legend.position="none", text=element_text(size=12)) + xlab("Mean GDD deadline, 1998-2007 (ordinal day)") + ylab("Critical photoperiod, 2008 (h)") + ylim(12.3, 14.2)
+gdd_cpp_interval_08<-ggplot(filter(interval_summaries, interval=="y1998-2007", CPP_YEAR==2008), aes(x=gdd465_mean, y=cpp, fill=country)) + geom_point(size=3, shape=21) + scale_fill_manual(values=c("black","gray"), name="Country") + stat_smooth(method=lm, se=FALSE, aes(color=country)) + scale_color_manual(values=c("black", "gray"), name="Country") + theme_bw() + theme(legend.position="none", text=element_text(size=12)) + xlab("Mean GDD deadline, 1998-2007 (ordinal day)") + ylab("Critical photoperiod, 2008 (h)") + ylim(12.3, 14.2)
 
 ```
 
@@ -323,29 +329,14 @@ gdd_cpp_plot<-plot_grid(gdd_08, gdd_18, gdd_cpp_interval_08, gdd_cpp_interval_18
 
 
 ```{r echo=FALSE, include=FALSE}
-#2015 Diapause Incidence Field Trial
-field_data<-read.csv("DI_2015_FIELD.csv")
-field_data$WeekDate <- reorder(field_data$WeekDate, field_data$Week)
-field_data_plot<-ggplot(filter(field_data, Eggs=="Field"), aes(x=WeekDate, y=DI)) + geom_point(size=3, shape=21, fill="gray") + theme_bw() + theme(axis.text.x = element_text(angle = 90, hjust = 1)) +
-xlab("Week") + ylab("Diapause incidence") + geom_vline(aes(xintercept=10.4), linetype="dotted")
+data_18<-gdd465_all_new %>% filter(CPP_YEAR==2018) %>% filter(year==2017)
+model1<-lm(Estimate~gdd465*country, data=data_18)
 
-field.model.fit <- drm(DI ~ Week, data = filter(field_data, Eggs=="Field"), fct = LL.5())
-summary(field.model.fit)
-# estimate the 50% intercept
-cpp_field<-data.frame(ED(field.model.fit, 50))
+data_08<-gdd465_all_new %>% filter(CPP_YEAR==2008) %>% filter(year==2007)
+model2<-lm(Estimate~gdd465*country, data=data_08)
 
-```
-
-
-```{r echo=FALSE, include=FALSE}
-data_18<-gdd400_all_new %>% filter(CPP_YEAR==2018) %>% filter(year==2017)
-model1<-lm(Estimate~gdd400*country, data=data_18)
-
-data_08<-gdd400_all_new %>% filter(CPP_YEAR==2008) %>% filter(year==2007)
-model2<-lm(Estimate~gdd400*country, data=data_08)
-
-model3<-lm(cpp~gdd400_mean*country, data=filter(interval_summaries, interval=="y2008-2017", CPP_YEAR==2018))
-model4<-lm(cpp~gdd400_mean*country, data=filter(interval_summaries, interval=="y1998-2007", CPP_YEAR==2008))
+model3<-lm(cpp~gdd465_mean*country, data=filter(interval_summaries, interval=="y2008-2017", CPP_YEAR==2018))
+model4<-lm(cpp~gdd465_mean*country, data=filter(interval_summaries, interval=="y1998-2007", CPP_YEAR==2008))
 
 anova(model1)
 anova(model2)
@@ -355,39 +346,31 @@ anova(model4)
 ```
 
 ```{r echo=FALSE, include=FALSE}
-write.csv(filter(gdd400_all_new, year %in% c(2007,2017)), "gdd_cpp_07_17.csv")
-prev_year<-read.csv("gdd_prevyear.csv")
-prev_year$CPP_YEAR<-as.factor(prev_year$CPP_YEAR)
+#2015 Diapause Incidence Field Trial
+field_data<-read.csv("DI_2015_FIELD.csv")
+field_data$WeekDate <- reorder(field_data$WeekDate, field_data$Week)
 
-write.csv(interval_summaries, "interval_summaries.csv")
-prev_interval<-read.csv("gdd_previnterval.csv")
-prev_interval$CPP_YEAR<-as.factor(prev_interval$CPP_YEAR)
+#field eggs only
+field.model.fit <- drm(DI ~ Week, data = dc_field_eggs, fct = LL.5())
+summary(field.model.fit)
+# estimate the 50% intercept
+cpp_field<-data.frame(ED(field.model.fit, 50))
 
-```
 
-```{r echo=FALSE, include=FALSE}
-prevyear_all<-ggplot(prev_year, aes(x=prev_year_gdd400, y=Estimate, fill=country, shape=CPP_YEAR)) + 
-  geom_point(size=3) + scale_fill_manual(values=c("black", "gray"), name="Country") + scale_shape_manual(values=c(21,24), name="Year") +
-  stat_smooth(method=lm, se=FALSE, aes(linetype=CPP_YEAR, color=country)) + scale_linetype_manual(values=c("dotted","solid"), name="Year") + 
-  scale_color_manual(values=c("black","gray"), name="Country") +
-  guides(fill=guide_legend(override.aes=list(shape=22)), linetype=guide_legend(override.aes=list(color="black")),
-  color=guide_legend(override.aes=list(linetype=0)), color=guide_legend(override.aes=list(linetype=0)), linetype=guide_legend(legend.key.width=unit(3,"line"))) +
-  theme_bw() + theme(legend.position="none", text=element_text(size=12)) + xlab("Previous year's GDD deadline (ordinal day)") + ylab("Critical photoperiod (h)") + ylim(12.3,14.2)
+field_data_plot<-ggplot(field_data, aes(x=WeekDate, y=DI)) + geom_point(size=3, shape=21, fill="gray") + theme_bw() + theme(axis.text.x = element_text(angle = 90, hjust = 1)) +
+xlab("Week") + ylab("Diapause incidence") + geom_vline(aes(xintercept=cpp_field$Estimate), linetype="dotted")
 
-previnterval_all<-ggplot(prev_interval, aes(x=gdd400_mean_previnterval, y=cpp, fill=country, shape=CPP_YEAR)) + 
-  geom_point(size=3) + scale_fill_manual(values=c("black", "gray"), name="Country") + scale_shape_manual(values=c(21,24), name="Year") +
-  stat_smooth(method=lm, se=FALSE, aes(linetype=CPP_YEAR, color=country)) + scale_linetype_manual(values=c("dotted","solid"), name="Year") + 
-  scale_color_manual(values=c("black","gray"), name="Country") +
-  guides(fill=guide_legend(override.aes=list(shape=22)), linetype=guide_legend(override.aes=list(color="black")),
-  color=guide_legend(override.aes=list(linetype=0)), color=guide_legend(override.aes=list(linetype=0)), linetype=guide_legend(legend.key.width=unit(3,"line"))) +
-  theme_bw() + theme(legend.position=c(.8,.75), text=element_text(size=12)) + xlab("Previous decade's GDD deadline (ordinal day)") + ylab("Critical photoperiod (h)") + ylim(12.3,14.2)
 
-prev_year_plots<-plot_grid(prevyear_all, previnterval_all, labels="AUTO")
-```
+#2014 GDD diagram
+man2014<-read.csv("2014_Mean_Temp_MAN.csv") %>% gather(degreetype, degrees, "CountDegrees":"UncountDegrees")
 
-```{r echo=FALSE, include=FALSE}
-all_prevyear_model<-lm(Estimate~prev_year_gdd400*country*CPP_YEAR, data=prev_year)
-all_previnterval_model<-lm(cpp~gdd400_mean_previnterval*country*CPP_YEAR, data=prev_interval)
+man2014_gdd_plot<-ggplot(filter(man2014, DOY_2014>187), aes(x=DOY_2014, y=degrees, fill=degreetype)) + geom_bar(stat="identity", width=1) + 
+  scale_fill_manual(values=c("dark gray","light gray")) + 
+  theme_bw() + 
+  geom_hline(yintercept=10, linetype="dotted") + geom_vline(xintercept=251) + theme(legend.position="none") +
+  ylab("Mean Temp (C)")
+
+
 ```
 
 ## Introduction
@@ -476,6 +459,11 @@ cpp_08_18_shifts_bw
 kable(prettify(anova(cppmodel)), digits=3, caption="Table 3: Effects of latitude, country and year on critical photoperiod in 2008 and 2018.")
 ```
 
+```{r}
+summary(cppmodel)
+```
+
+
 We reasoned that the optimal time for entering diapause depended on the amount of time required to complete a full generation under particular climatic conditions. Insect phenology studies often estimate generation times using growing degree day (GDD) models, which take advantage of the fact that insect development time is linearly temperature-dependent under moderate climate conditions. Based on a survey of literature of Aedes albopictus growth rates under various temperature conditions, we estimated that a mosquito generation - from the egg stage through ovipostion - required 400-465 growing degree-days. We used climate records over the past 20 years from our sampling locations to calculate a yearly GDD-based "deadline" for diapause at each location: the date after which eggs laid would not have enough growing degree days left in the year to complete another generation. 
 
 Although field data about Aedes albopictus diapause egg production are scarce, we were able to use field observations collected in 2015 at site in Washington, DC, USA as preliminary verification of the GDD approach. Briefly, oviposition cups were placed outdoors and Aedes albopictus eggs collected weekly were scored for diapause incidence using the same methods described here. The diapause incidence curve (Fig S) was used to determine the critical date at which the majority of eggs produced by wild mosquitoes were in diapause. The critical date occurred during the week of September 7, 2015, corresponding to ordinal day 250. The calculated deadline for Manassas, VA (~50 km from DC) in 2015 was 256-263. In 2014, the calculated deadline was 247-252. These results confirmed that GDD deadlines broadly correspond to field observations and suggested that examining the GDD deadline in years preceding the collection year is a reasonable approach.
@@ -495,16 +483,6 @@ gdd_cpp_plot
 kable(rbind(prettify(anova(model2)), prettify(anova(model1)), prettify(anova(model4)), prettify(anova(model3))), digits=3)  
 ```
 
-
-```{r echo=FALSE}
-prev_year_plots
-```
-
-```{r echo=FALSE}
-kable(prettify(anova(all_prevyear_model)), digits=3) 
-kable(prettify(anova(all_previnterval_model)), digits=3)
-
-```
 
 
 The GDD-based estimate of diapause deadline date does not explain the shift to earlier critical photoperiod between 2008 and 2018. Although deadline dates vary from year to year, there is no discernible directional trend over the 20-year period examined, except for very slight trends 
@@ -560,14 +538,14 @@ field_data_plot
 ```{r echo=FALSE}
 gdd_deadline_plots
 ```
-```{r echo=FALSE}
-plot_grid(ggplot(filter(gdd400_jp, only_2008=="n"), aes(x=year, y=gdd400, color=pop)) + geom_point() + geom_line() + theme_bw() + stat_smooth(method=lm, se=FALSE) + xlab("Year") + ylab("GDD Deadline"),ggplot(gdd400_us, aes(x=year, y=gdd400, color=pop)) + geom_point() + geom_line() + theme_bw() + stat_smooth(method=lm, se=FALSE) + xlab("Year") + ylab("GDD Deadline"), labels="AUTO")
+```{r echo=FALSE, include=FALSE}
+plot_grid(ggplot(filter(gdd465_jp, only_2008=="n"), aes(x=year, y=gdd465, color=pop)) + geom_point() + geom_line() + theme_bw() + stat_smooth(method=lm, se=FALSE) + xlab("Year") + ylab("GDD Deadline"),ggplot(gdd465_us, aes(x=year, y=gdd465, color=pop)) + geom_point() + geom_line() + theme_bw() + stat_smooth(method=lm, se=FALSE) + xlab("Year") + ylab("GDD Deadline"), labels="AUTO")
 
 ```
 
 ```{r echo=FALSE, warning=FALSE}
-gdd_by_interval<-ggplot(filter(interval_summaries, CPP_YEAR==2018), aes(x=latitude, y=gdd400_mean, fill=country, shape=interval)) + 
-  geom_point(size=3) + scale_fill_manual(values=c("black", "gray"), name="Country") + scale_shape_manual(values=c(21,24), name="Period") + geom_errorbar(aes(ymin=gdd400_mean-gdd400_sd, ymax=gdd400_mean+gdd400_sd, color=country)) +
+gdd_by_interval<-ggplot(filter(interval_summaries, CPP_YEAR==2018), aes(x=latitude, y=gdd465_mean, fill=country, shape=interval)) + 
+  geom_point(size=3) + scale_fill_manual(values=c("black", "gray"), name="Country") + scale_shape_manual(values=c(21,24), name="Period") + geom_errorbar(aes(ymin=gdd465_mean-gdd465_sd, ymax=gdd465_mean+gdd465_sd, color=country)) +
   stat_smooth(method=lm, se=FALSE, aes(linetype=interval, color=country)) + scale_linetype_manual(values=c("dotted","solid"), name="Period") + 
   scale_color_manual(values=c("black","gray"), name="Country") +
   guides(fill=guide_legend(override.aes=list(shape=22)), linetype=guide_legend(override.aes=list(color="black")),
@@ -576,14 +554,98 @@ gdd_by_interval<-ggplot(filter(interval_summaries, CPP_YEAR==2018), aes(x=latitu
 
 gdd_by_interval
 ```
+```{r}
+annualmeantemp_US<-read.csv("AnnualMeanTemp_US.csv", check.names=FALSE) %>% gather(year, annualmeantemp, "1998":"2018", factor_key=FALSE)
+annualmeantemp_US$year<-as.numeric(annualmeantemp_US$year)
+#ggplot(annualmeantemp_US, aes(x=year, y=annualmeantemp, color=pop)) + geom_point() + geom_line()
+
+annualmeantemp_JP<-read.csv("AnnualMeanTemp_JP.csv", check.names=FALSE) %>% gather(year, annualmeantemp, "1998":"2018", factor_key=FALSE)
+annualmeantemp_JP$year<-as.numeric(annualmeantemp_JP$year)
+#ggplot(annualmeantemp_JP, aes(x=year, y=annualmeantemp, color=pop)) + geom_point() + geom_line()
+
+plot_grid(ggplot(annualmeantemp_US, aes(x=year, y=annualmeantemp, color=pop)) + geom_point() + geom_line() + stat_smooth(method=lm, se=FALSE), ggplot(annualmeantemp_JP, aes(x=year, y=annualmeantemp, color=pop)) + geom_point() + geom_line() + stat_smooth(method=lm, se=FALSE))
+```
 
 
 ```{r figs_for_poster, include=FALSE, echo=FALSE}
-ggplot(filter(cpp_2, year!=1988), aes(x=lat, y=Estimate, color=country, shape=year)) + 
+ggplot(cpp_all, aes(x=lat, y=Estimate, color=country, shape=year)) + 
      geom_point(size=6) + scale_color_manual(values=c("red", "blue")) +
      stat_smooth(method=lm, se=FALSE, aes(linetype=year)) + scale_linetype_manual(values=c("dotted","solid")) + theme_bw() + theme(legend.position=c(.8,.25), text=element_text(size=24)) + xlab("Latitude") + ylab("Critical photoperiod")
 remove_geom(us_map, "label") %>% remove_geom("point") + ylim(24,48) + geom_scatterpie(data=filter(DI_info, country=="US", year=="2018"), aes(x=longitude, y=latitude, r=.7, alpha=0.95), cols=c("Diapause", "Nondiapause")) + scale_fill_manual(values=c("black","white")) + theme(text=element_text(size=24), axis.title.x=element_blank(), axis.text.x=element_blank(), axis.ticks.x=element_blank(), axis.title.y=element_blank(), legend.position="none", plot.margin = unit(c(0, 0, 0, 0), "null"))
 remove_geom(japan_map, "label") %>% remove_geom("point") + ylim(24,48) + geom_scatterpie(data=filter(DI_info, country=="JP", year=="2018"), aes(x=longitude, y=latitude, r=.7, alpha=0.95), cols=c("Diapause", "Nondiapause")) + scale_fill_manual(values=c("black","white")) + theme(text=element_text(size=24), axis.title.x=element_blank(), axis.text.x=element_blank(), axis.ticks.x=element_blank(), axis.title.y=element_blank(), legend.position="none", plot.margin = unit(c(0, 0, 0, 0), "null")) 
+```
+
+
+```{r}
+ggplot(filter(cpp_2, year!=1988), aes(x=lat, y=Estimate, fill=country, shape=year)) + 
+  geom_point(size=5) + scale_fill_manual(values=c("black", "gray"), name="Country") + scale_shape_manual(values=c(21,24), name="Year") +
+  stat_smooth(method=lm, se=FALSE, aes(linetype=year, color=country)) + scale_linetype_manual(values=c("dotted","solid"), name="Year") + 
+  scale_color_manual(values=c("black","gray"), name="Country") +
+  guides(fill=guide_legend(override.aes=list(shape=22)), linetype=guide_legend(override.aes=list(color="black")),
+  color=guide_legend(override.aes=list(linetype=0)), color=guide_legend(override.aes=list(linetype=0)), linetype=guide_legend(legend.key.width=unit(3,"line"))) +
+  theme(legend.position=c(.8,.25), text=element_text(size=16),
+        panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+        panel.background = element_blank(), axis.line = element_line(colour = "black")) + 
+  xlab("Latitude") + ylab("Critical photoperiod (h)")
+
+ggplot(filter(cpp_2, year!=1988), aes(x=lat, y=Estimate, fill=country, shape=year)) + 
+  geom_point(size=5) + scale_fill_manual(values=c("black", "gray"), name="Country") + scale_shape_manual(values=c(21,22), name="Year") +
+  stat_smooth(method=lm, se=FALSE, aes(linetype=year, color=country)) + scale_linetype_manual(values=c("dotted","solid"), name="Year") + 
+  scale_color_manual(values=c("black","gray"), name="Country") +
+  guides(fill=guide_legend(override.aes=list(shape=23)), linetype=guide_legend(override.aes=list(color="black"), legend.key.width=unit(3,"line")),
+  color=guide_legend(override.aes=list(linetype=0))) +
+  theme(legend.position=c(.8,.25), text=element_text(size=16),
+        panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+        panel.background = element_blank(), axis.line = element_line(colour = "black")) + 
+  xlab("Latitude") + ylab("Critical photoperiod (h)")
+
+
+ggplot(filter(cpp_2, year!=1988), aes(x=lat, y=Estimate, fill=country, shape=year)) + 
+  geom_point(size=5) + scale_fill_manual(values=c("black", "gray"), name="Country") + scale_shape_manual(values=c(21,24), name="Year") +
+  stat_smooth(method=lm, se=FALSE, aes(linetype=year, color=country)) + scale_linetype_manual(values=c("dotted","solid"), name="Year") + 
+  scale_color_manual(values=c("black","gray"), name="Country") +
+  guides(fill=guide_legend(override.aes=list(shape=22)), linetype=guide_legend(override.aes=list(color="black")),
+  color=guide_legend(override.aes=list(linetype=0)), color=guide_legend(override.aes=list(linetype=0)), linetype=guide_legend(legend.key.width=unit(3,"line"))) +
+  theme(legend.position=c(.8,.25), text=element_text(size=16),
+        panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+        panel.background = element_blank(), axis.line = element_line(colour = "black")) + 
+  xlab("Latitude") + ylab("Critical photoperiod (h)")
+
+ggplot(filter(cpp_2, year!=1988), aes(x=lat, y=Estimate, fill=year, shape=country)) + 
+  geom_point(size=5) + scale_fill_manual(values=c("gray", "black"), name="Year") + scale_shape_manual(values=c(21,22), name="Country") +
+  stat_smooth(method=lm, se=FALSE, aes(linetype=country, color=year)) + scale_linetype_manual(values=c("dotted","solid"), name="Country") + 
+  scale_color_manual(values=c("gray","black"), name="year") +
+  guides(fill=guide_legend(override.aes=list(shape=22)), linetype=guide_legend(override.aes=list(color="black")),
+  color=guide_legend(override.aes=list(linetype=0)), color=guide_legend(override.aes=list(linetype=0)), linetype=guide_legend(legend.key.width=unit(3,"line"))) +
+  theme(legend.position=c(.8,.25), text=element_text(size=16),
+        panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+        panel.background = element_blank(), axis.line = element_line(colour = "black")) + 
+  xlab("Latitude") + ylab("Critical photoperiod (h)")
+
+
+
+#version with only one shape, gray/black for years
+ggplot(cpp_all, aes(x=lat, y=Estimate, alpha=year, fill=country)) +
+  geom_point(size=3, shape=21, stroke=1) + scale_fill_manual(values=c("white", "black"), name="Country") +
+  scale_alpha_manual(values=c(0.3, 1), name="Year") +
+  stat_smooth(method=lm, se=FALSE, aes(linetype=country, color=year), size=1.5) + scale_color_manual(values=c("gray", "black"), name="Year") +  scale_linetype_manual(values=c("longdash","solid"), name="Country") + 
+  theme(legend.position=c(.8,.25), text=element_text(size=16),
+        panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+        panel.background = element_blank(), axis.line = element_line(colour = "black")) + 
+  xlab("Latitude") + ylab("Critical photoperiod (h)") + 
+  guides(linetype=guide_legend(override.aes=list(color="black"), legend.key.width=unit(5,"line")))
+
+
+ggplot(cpp_all, aes(x=lat, y=Estimate, alpha=year, color=country)) +
+  geom_point(size=3) + scale_color_manual(values=c("blue", "black"), name="Country") +
+  scale_alpha_manual(values=c(0.3, 1), name="Year") +
+  stat_smooth(method=lm, se=FALSE, aes(linetype=year, color=country), size=2) + scale_linetype_manual(values=c("longdash","solid"), name="Country") + 
+  theme(legend.position=c(.8,.25), text=element_text(size=16),
+        panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+        panel.background = element_blank(), axis.line = element_line(colour = "black")) + 
+  xlab("Latitude") + ylab("Critical photoperiod (h)") + 
+  guides(linetype=guide_legend(override.aes=list(color="black"), legend.key.width=unit(5,"line")))
+
 ```
 
 
