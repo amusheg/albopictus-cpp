@@ -8,6 +8,6 @@ This study recapitulates work done in Urbanski et al. Am Nat 2012: https://www.j
 
 These three files are used as input in ```CPP_analysis.Rmd``` to compare CPP data across latitudes, countries and years. Diapause incidence data from this analysis was written to ```diapause_incidence_8h_2008_2018.csv```.
 
-mapping_pops_cpp_expt.csv contains information about collection sites. Together with ```diapause_incidence_8h_2008_2018.csv```, it's input into ```maps.R``` to create maps.
+```mapping_pops_cpp_expt.csv``` contains information about collection sites. Together with ```diapause_incidence_8h_2008_2018.csv```, it's input into ```maps.R``` to create maps.
 
 
