@@ -2,4 +2,4 @@
 
 This study recapitulates work done in Urbanski et al. Am Nat 2012: https://www.journals.uchicago.edu/doi/full/10.1086/664709
 
-```_albopictus_cpp_MS.Rmd``` contains code for calculating diapause incidence and critical photoperiod, collating climate data, analyzing correlations and generating figures.
+```Albopictus_cpp_MS.Rmd``` contains code for calculating diapause incidence and critical photoperiod, collating climate data, analyzing correlations and generating figures.
