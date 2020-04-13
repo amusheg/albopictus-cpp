@@ -1,0 +1,622 @@
+
+---
+title: "Ae. albopictus CPP manuscript"
+header-includes: #allows you to add in your own Latex packages
+- \usepackage{float} #use the 'float' package
+- \floatplacement{figure}{H} #make every figure with caption = h
+- \usepackage{caption}
+- \captionsetup[figure]{labelformat=empty}
+- \captionsetup[table]{labelformat=empty}
+output:
+  html_document: default
+  word_document: default
+  pdf_document: default
+bibliography: MyLibrary.bib
+---
+
+```{r eval=FALSE, message=FALSE, include=FALSE}
+install.packages("tidyverse") #1.2.1
+install.packages("drc") #3.0.1
+install.packages("stringr")
+install.packages("lubridate")
+install.packages(c("maps", "mapdata"))
+devtools::install_github("dkahle/ggmap")
+install.packages("scatterpie")
+install.packages("ggedit")
+install.packages("ggrepel")
+install.packages("papeR")
+install.packages("cowplot")
+install.packages("flextable")
+install.packages("stats")
+install.packages("ggbiplot")
+```
+
+```{r message=FALSE, echo=FALSE, include=FALSE}
+library("papeR")
+library("flextable")
+library("drc") #3.0.1
+library("knitr") #1.25
+library("tidyverse") #1.2.1
+library("stringr") #1.4.0
+library("geosphere") #1.5.10
+library("lubridate") #1.7.4
+library("maps")
+library("mapdata")
+library("ggedit")
+library("ggrepel")
+library("cowplot")
+library("ggrepel")
+library("stats")
+library("ggbiplot")
+
+```
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(dpi=300)
+```
+
+```{r datasheet, echo=FALSE, include=FALSE}
+all_data<-data.frame(read.csv("CPP_experiment_data_collated.csv"))
+#Filter out empty/discarded oviposition papers 
+blockAB<-dplyr::filter(all_data, TotalLarvaeEmbryos>0)
+```
+
+```{r yields, echo=FALSE, include=FALSE}
+#Calculate yield/fraction of initial count
+blockAB$yield <- blockAB$TotalLarvaeEmbryos/blockAB$InitialEggs 
+hist(blockAB$yield, main="Yield (final/initial count) per oviposition paper")
+plot(blockAB$yield ~ blockAB$TotalLarvaeEmbryos)
+```
+
+```{r filter papers, echo=FALSE, include=FALSE}
+#removing papers with <60% or >100% initial count
+blockAB_unfiltered<-blockAB
+blockAB_filtered <- filter(blockAB, yield<=1) %>% filter(yield>=0.6) 
+```
+
+```{r summarize, echo=FALSE, include=FALSE}
+DI_summarize <- function(blockAB) {
+DI_summary <- blockAB %>% 
+  group_by(CageID) %>% 
+  dplyr::summarise(pop=first(Population), pp=mean(Photoperiod), lat=mean(Lat), block=first(Block), country=first(Country), h1=sum(H1Count), h2=sum(H2Count), emb=sum(EmbryoCount)) %>%   filter(h1+h2+emb>100)
+DI_summary$total<-DI_summary$h1+DI_summary$h2+DI_summary$emb
+DI_summary$DI<-DI_summary$emb/DI_summary$total
+return(DI_summary)
+}
+```
+
+```{r, echo=FALSE, include=FALSE}
+DI_summary<-DI_summarize(blockAB_filtered)
+```
+
+```{r totals_plot, echo=FALSE, include=FALSE}
+hist(DI_summary$total, main="Total number of viable eggs per cage")
+```
+
+```{r DI_plot, echo=FALSE, include=FALSE}
+#FIG S2
+#plot with DI at 8 h shown as TWO DIFFERENT points (corresponding to two cabinets)
+c("PBS", "FEM", "OAK", "JAC", "BRU", "ZIO", "FAY", "NVA", "WAV", "MAN", "BER", "NEW", "OKI", "TAN", "KAG", "YAT", "SAG", "SHI", "YAM", "HIR", "KYO", "TAK", "TOK", "UTS", "KAN", "KHO", "AIZ", "NIG", "SEN", "SAK")
+DI_summary$pop<-factor(DI_summary$pop, levels=c("PBS", "FEM", "OAK", "JAC", "BRU", "ZIO", "FAY", "NVA", "WAV", "MAN", "BER", "NEW", "OKI", "TAN", "KAG", "YAT", "SAG", "SHI", "YAM", "HIR", "KYO", "TAK", "TOK", "UTS", "KAN", "KHO", "AIZ", "NIG", "SEN", "SAK"))
+DI_plot<-ggplot(DI_summary, aes(x=pp, y=DI, group=pop, fill=country)) + geom_point(shape=21) + facet_wrap(~fct_reorder(pop, lat)) + theme_bw() + theme(legend.position="NULL", text=element_text(size=18)) + 
+xlab("Photoperiod (hours)") + ylab("Dipause incidence") + scale_fill_manual(values=c("black","gray")) 
+```
+
+```{r CPP_calc_2018, echo=FALSE, include=FALSE}
+#From Kevin Emerson
+# the following fits the models of the given  using data from the
+# data.frame d separately for the various treatments using a 5 parameter
+# logistic model
+d.model.fit <- drm(DI ~ pp, data = DI_summary, curveid = pop, fct = LL.5())
+#plot(d.model.fit, log = "")
+# output the parameters of the model fits:
+summary(d.model.fit)
+# estimate the 50% intercept
+ED(d.model.fit, 50)
+cpp_values<-data.frame(ED(d.model.fit, 50))
+
+pm<-drc:::predict.drc(d.model.fit, type="response")
+```
+
+```{r CPP_calc_2008, echo=FALSE, include=FALSE}
+DI_summary_2008<-data.frame(read.csv("CPP_2008.csv"))
+d.model.fit.2008 <- drm(DI ~ photoperiod, data = DI_summary_2008, curveid = pop, fct = LL.5())
+  
+#plot(d.model.fit.2008, log = "")
+# output the parameters of the model fits:
+summary(d.model.fit)
+# estimate the 50% intercept
+ED(d.model.fit.2008, 50)
+cpp_values_2008<-data.frame(ED(d.model.fit.2008, 50))
+```
+
+```{r collate_cpp_values, echo=FALSE, include=FALSE}
+cpp_2018<-data.frame(ED(d.model.fit, 50))
+cpp_2018<-rownames_to_column(cpp_2018, var="pop") 
+cpp_2018$pop<-str_sub(cpp_2018$pop,3,5)
+popdata_2018<-DI_summary %>% group_by(pop) %>% 
+  dplyr::summarize(lat=first(lat), country=first(country))
+cpp_2018<-right_join(cpp_2018, popdata_2018, by="pop")
+cpp_2018$year<-rep("2018", nrow(cpp_2018))
+colnames(cpp_2018)[colnames(cpp_2018)=="Std..Error"] <- "StdError"
+cpp_2008<-data.frame(ED(d.model.fit.2008, 50)) %>% rownames_to_column(var="pop")
+cpp_2008$pop<-str_sub(cpp_2008$pop,3,5)
+colnames(cpp_2008)[colnames(cpp_2008)=="Std..Error"] <- "StdError"
+popdata_2008<-DI_summary_2008 %>% group_by(pop) %>% 
+  dplyr::summarize(country=first(country), lat=first(lat), year=first(year)) 
+cpp_2008<-right_join(cpp_2008, popdata_2008, by="pop")
+#1988 data not used in present study but can load it anyway
+cpp_1988<-data.frame(read.csv("CPP_1988.csv")) 
+cpp_1988$pop<-na_if(cpp_1988$pop, "NA")
+cpp_1988$StdError<-na_if(cpp_1988$StdError, "NA")
+
+#2008 and 2018 data
+cpp_all<-rbind(cpp_2008, cpp_2018) 
+write.csv(cpp_all, "cpp_calcs_filtered.csv")
+```
+
+```{r}
+#FIG S1
+yield_plot<-ggplot(blockAB, aes(x=TotalLarvaeEmbryos, y=yield)) + geom_point(alpha=0.5) + xlab("Number of viable eggs\n on oviposition paper") + ylab("Viable eggs/initial egg count on paper") + theme_bw() + theme(text=element_text(size=18))
+
+cpp_filtered<-read.csv("cpp_calcs_filtered.csv") %>% dplyr::select(pop, Estimate, country, lat, year) %>% filter(year==2018)
+cpp_unfiltered<-read.csv("cpp_calcs_unfiltered.csv") %>% dplyr::select(pop, Estimate, country, lat, year) %>% filter(year==2018)
+names(cpp_filtered)[2]<-"CPP_est_filt"
+names(cpp_unfiltered)[2]<-"CPP_est_unfilt"
+cpp_compare<-left_join(cpp_filtered,cpp_unfiltered,by="pop")
+
+filter_compare_plot<-ggplot(cpp_compare, aes(x=CPP_est_unfilt, y=CPP_est_filt)) + geom_point() + geom_abline(slope=1, intercept=0) + xlab("CPP without filtering criteria") + ylab("CPP calculated with filtering criteria") + theme_bw() + theme(text=element_text(size=18))
+
+quality_control_fig<-plot_grid(yield_plot, filter_compare_plot, labels="AUTO")
+```
+
+```{r cppmodel, echo=FALSE, include=FALSE}
+cppmodel<-lm(Estimate~lat*country*year, data=cpp_all)
+cppmodel_result<-data.frame(anova(cppmodel))
+```
+
+```{r, echo=FALSE, include=FALSE}
+#basic breakdown
+ggplot(cpp_all, aes(x=lat, y=Estimate, color=country)) + 
+  geom_point() + 
+  geom_errorbar(aes(ymin=Estimate-StdError, ymax=Estimate+StdError), na.rm=TRUE) + 
+  facet_grid(~year) + stat_smooth(method=lm, se=FALSE)
+```
+
+```{r, echo=FALSE, include=FALSE}
+#FIG 2: CPP by latitude, year and country
+#black=Japan, gray=US / circle=2018, square=2008 / solid line=2018, dashed line=2008
+cpp_08_18_shifts_bw <- ggplot(cpp_all, aes(x=lat, y=Estimate, fill=country, shape=year)) +
+  geom_point(size=4, stroke=1) + scale_fill_manual(values=c("black", "gray"), name="Country") +
+  scale_shape_manual(values=c(22,21), name="Year") +
+  stat_smooth(method=lm, se=FALSE, aes(linetype=year, color=country), size=1.5) + scale_color_manual(values=c("black", "gray"), name="Country") +  scale_linetype_manual(values=c("longdash","solid"), name="Year") + 
+  theme(legend.position=c(.8,.25), text=element_text(size=24),
+        panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+        panel.background = element_blank(), axis.line = element_line(colour = "black")) + 
+  xlab("Latitude") + ylab("Critical photoperiod (h)") + 
+  guides(linetype=guide_legend(override.aes=list(color="black"), legend.key.width=unit(5,"line")))
+
+```
+
+```{r incidence_lat_year, echo=FALSE, include=FALSE}
+DI_short_2008<-filter(DI_summary_2008, photoperiod==8)
+DI_short_2018<-filter(DI_summary, pp==8) %>% group_by(pop) %>% 
+  dplyr::summarize(country=first(country), lat=first(lat), photoperiod=first(pp), emb=sum(emb), total=sum(total))
+DI_short_2018$DI<-DI_short_2018$emb/DI_short_2018$total
+DI_short_2018<-DI_short_2018[,c(1:4,7)] 
+DI_short_2018$year<-rep("2018",nrow(DI_short_2018))
+DI_short<-rbind(DI_short_2008, DI_short_2018)
+write_csv(DI_short, "diapause_incidence_8h_2008_2018.csv")
+```
+
+```{r dimodel, echo=FALSE, include=FALSE}
+#DI by lat/country/year comparison
+dimodel_poly_us<-lm(DI~lat^2 + lat, data=filter(DI_short, country=="US"))
+dimodel_lat_us<-lm(DI~lat, data=filter(DI_short, country=="US"))
+dimodel<-lm(DI~lat*country*year, data=DI_short)
+dimodel_result<-data.frame(anova(dimodel))
+#checking for normality of residuals
+dimodel.stdres<-rstandard(dimodel)
+qqnorm(dimodel.stdres, ylab="Standardized Residuals", xlab="Normal Scores", main="Normal Probability Plot")
+qqline(dimodel.stdres)
+
+#Spearman rank correlation coefficients
+cor.test(filter(DI_short_2, country=="US", year==2018)$lat, filter(DI_short, country=="US", year==2018)$DI, alternative="two.sided", method="spearman")
+cor.test(filter(DI_short_2, country=="JP", year==2018)$lat, filter(DI_short, country=="JP", year==2018)$DI, alternative="two.sided", method="spearman")
+
+#comparison of latitude-matched DIs in each country between 2008 and 2018
+#exact latitude match in US; matched by rank in JP
+wilcox.test((filter(DI_short, country=="US", year==2018, pop!="PBS") %>% arrange(lat))$DI, (filter(DI_short, country=="US", year==2008) %>% arrange(lat))$DI, paired=TRUE)
+wilcox.test((filter(DI_short, country=="JP", year==2018) %>% arrange(lat))$DI, (filter(DI_short, country=="JP", year==2008) %>% arrange(lat))$DI, paired=TRUE)
+
+#FIG S3
+#black=Japan, gray=US / circle=2018, square=2008 / solid line=2018, dashed line=2008
+country_DI_bw<-ggplot(DI_short, aes(x=lat, y=DI, fill=country, shape=year)) + scale_fill_manual(values=c("gray","black"), name="Country") + scale_shape_manual(values=c(22,21), name="Year") + geom_point(size=3) +   theme(legend.position=c(.8,.25), text=element_text(size=18),
+        panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+        panel.background = element_blank(), axis.line = element_line(colour = "black")) + 
+xlab("Latitude") + ylab("Short-day diapause incidence") + stat_smooth(aes(linetype=year, color=country), se=FALSE) + scale_linetype_manual(values=c("longdash","solid"), name="Year") + scale_color_manual(values=c("gray","black"), name="Country")
+
+```
+
+```{r maps, echo=FALSE, include=FALSE}
+usa<-map_data("usa")
+jp<-map_data("japan")
+pops<-data.frame(read.csv("mapping_pops_cpp_expt.csv"))
+us_map<-ggplot() + geom_polygon(data = usa, aes(x=long, y = lat, group=group), fill=NA, color="blue") + 
+  coord_fixed(1.3) + geom_point(data = filter(pops, country=="US"), aes(x = longitude, y = latitude), size = 1) + xlim(c(-85, -65)) +
+  geom_label(data=filter(pops, country=="US"), aes(x=longitude, y=latitude, label=pop), hjust=0, label.padding=unit(0.1, "lines")) +
+  theme_bw() 
+japan_map<-ggplot() + geom_polygon(data = jp, aes(x=long, y = lat, group=group), fill=NA, color="red") + 
+  coord_fixed(1.3) + geom_point(data = filter(pops, country=="JP", only_2008=="n"), aes(x = longitude, y = latitude), size = 1)  + xlim(c(125, 147)) +
+  geom_label_repel(data=filter(pops, country=="JP", only_2008=="n"), aes(x=longitude, y=latitude, label=pop), hjust=0, label.padding=unit(0.1, "lines")) +
+  theme_bw() + theme(axis.title.x=element_blank(), axis.title.y=element_blank())
+
+#bw locations map
+us_map_bw<-ggplot() + geom_polygon(data = usa, aes(x=long, y = lat, group=group), fill=NA, color="black") + 
+  coord_fixed(1.3) + geom_point(data = filter(pops, country=="US"), aes(x = longitude, y = latitude), size = 2) + xlim(c(-87, -65)) + ylim(c(24,48)) +
+  geom_label_repel(data=filter(pops, country=="US"), aes(x=longitude, y=latitude, label=pop), hjust=0, label.padding=unit(0.1, "lines"), nudge_x=1.5, size=4) + theme_bw() + theme(text=element_text(size=24), plot.margin = unit(c(0,0,0,0), "cm")) + xlab("") + ylab("")
+
+japan_map_bw<-ggplot() + geom_polygon(data = jp, aes(x=long, y = lat, group=group), fill=NA, color="black") + 
+  coord_fixed(1.3) + geom_point(data = filter(pops, country=="JP", only_2008=="n"), aes(x = longitude, y = latitude), size = 2)  + xlim(c(125, 147)) + ylim(c(24,48)) +
+  geom_label_repel(data=filter(pops, country=="JP", only_2008=="n"), aes(x=longitude, y=latitude, label=pop), hjust=0, label.padding=unit(0.1, "lines"), size=4) + theme_bw() + theme(text=element_text(size=24), plot.margin = unit(c(0,0,0,0), "cm")) + xlab("") + ylab("Latitude")
+
+map_panels_bw<-plot_grid(japan_map_bw, us_map_bw)
+```
+
+```{r}
+#date of first first
+#first frost data
+#importing and reshaping table
+ff_us <- read.csv("FF_US.csv", check.names=FALSE) %>% gather(year, DFF, "1998":"2018", factor_key=FALSE)
+ff_us$year<-as.numeric(ff_us$year)
+ff_jp <- read.csv("FF_JP.csv", check.names=FALSE) %>% gather(year, DFF, "1998":"2018", factor_key=FALSE)
+ff_jp$year<-as.numeric(ff_jp$year)
+#adding latitudes
+locations<-read.csv("mapping_pops_cpp_expt.csv")
+ff_us<-left_join(ff_us, dplyr::select(locations, pop, latitude, country, only_2008), by=c("pop"))
+ff_jp<-left_join(ff_jp, dplyr::select(locations, pop, latitude, country, only_2008), by=c("pop"))
+ff_all<-rbind(ff_us, ff_jp)
+ff_all$pop<-as.factor(ff_all$pop)
+ff_all<-mutate(filter(ff_all, year!=2018), interval=case_when(year<=2017 & year>=2008 ~ 'y2008-2017',
+                                                  year<2008 ~ 'y1998-2007'))
+
+ff_interval_summaries<-ff_all %>% group_by(pop, interval) %>% dplyr::summarise(dff_mean=mean(DFF), dff_sd=sd(DFF), latitude=mean(latitude), country=first(country), only_2008=first(only_2008))
+
+ff_all_summary<-ff_all %>% group_by(pop) %>% dplyr::summarise(dff_mean=mean(DFF), dff_sd=sd(DFF), latitude=mean(latitude), country=first(country), only_2008=first(only_2008))
+
+
+#FIG 1B
+#black=Japan, gray=US 
+DFF_decade<-ggplot(filter(ff_interval_summaries, only_2008=="n", interval=="y2008-2017"), aes(x=latitude, y=dff_mean, fill=country)) + geom_point(size=3, shape=21, stroke=1) + scale_fill_manual(values=c("black", "gray"), name="Country") + stat_smooth(method=lm, se=FALSE, aes(color=country)) + scale_color_manual(values=c("black", "gray"), name="Country") +
+  theme(legend.position=c(.25,.25), text=element_text(size=22),
+        panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+        panel.background = element_blank(), axis.line = element_line(colour = "black")) +  scale_linetype_manual(values=c("dotted","solid"), name="Country") + geom_errorbar(aes(ymin=dff_mean-dff_sd, ymax=dff_mean+dff_sd)) + xlab("Latitude") + ylab("Date of first frost (ordinal day)")
+
+```
+
+```{r}
+locations_dff<-plot_grid(map_panels_bw, DFF_decade, nrow=2, labels="AUTO")
+locations_dff
+```
+
+
+```{r, echo=FALSE, include=FALSE}
+#GDD 400 deadline data
+#importing and reshaping table
+gdd400_us <- read.csv("GDD400_US.csv", check.names=FALSE) %>% gather(year, gdd400, "1998":"2018", factor_key=FALSE)
+gdd400_us$year<-as.numeric(gdd400_us$year)
+gdd400_jp <- read.csv("GDD400_JP.csv", check.names=FALSE) %>% gather(year, gdd400, "1998":"2018", factor_key=FALSE)
+gdd400_jp$year<-as.numeric(gdd400_jp$year)
+#adding latitudes
+locations<-read.csv("mapping_pops_cpp_expt.csv")
+gdd400_us<-left_join(gdd400_us, dplyr::select(locations, pop, latitude, country, only_2008), by=c("pop"))
+gdd400_jp<-left_join(gdd400_jp, dplyr::select(locations, pop, latitude, country, only_2008), by=c("pop"))
+gdd400_all<-rbind(gdd400_us, gdd400_jp)
+gdd400_all$pop<-as.factor(gdd400_all$pop)
+gdd400_all<-mutate(gdd400_all, interval=case_when(year<=2017 & year>=2008 ~ 'y2008-2017',
+                                                  year<2008 ~ 'y1998-2007'))
+
+gdd465_us <- read.csv("GDD465_US.csv", check.names=FALSE) %>% gather(year, gdd465, "1998":"2018", factor_key=FALSE)
+gdd465_us$year<-as.numeric(gdd465_us$year)
+gdd465_jp <- read.csv("GDD465_JP.csv", check.names=FALSE) %>% gather(year, gdd465, "1998":"2018", factor_key=FALSE)
+gdd465_jp$year<-as.numeric(gdd465_jp$year)
+locations<-read.csv("mapping_pops_cpp_expt.csv")
+gdd465_us<-left_join(gdd465_us, dplyr::select(locations, pop, latitude, country, only_2008), by=c("pop"))
+gdd465_jp<-left_join(gdd465_jp, dplyr::select(locations, pop, latitude, country, only_2008), by=c("pop"))
+gdd465_all<-rbind(gdd465_us, gdd465_jp)
+gdd465_all$pop<-as.factor(gdd465_all$pop)
+gdd465_all<-mutate(gdd465_all, interval=case_when(year<=2017 & year>=2008 ~ 'y2008-2017',
+                                                  year<2008 ~ 'y1998-2007'))
+gdd_all<-left_join(gdd400_all, gdd465_all)
+gdd_all$gdd<-(gdd_all$gdd400 + gdd_all$gdd465)/2
+
+```
+
+```{r, echo=FALSE, include=FALSE}
+#FIG S4
+gdd_deadline_plots<-ggplot(filter(gdd465_all, only_2008=="n", year!=2018), aes(x=latitude, y=gdd465, fill=country)) + scale_fill_manual(values=c("black", "gray"), name="Country") + geom_point(shape=21, size=3) + facet_wrap(~year) + xlab("Latitude") + ylab("GDD Deadline (ordinal day)") + theme_bw() + 
+theme(legend.position="bottom", text=element_text(size=18)) 
+```
+
+```{r echo=FALSE, include=FALSE}
+#adding 2008 and 2018 CPP values 
+cpp_year<-dplyr::select(read.csv("cpp_calcs_filtered.csv"), pop, Estimate, year) %>% dplyr::rename("CPP_YEAR"="year")
+gdd465_all_new<-left_join(gdd465_all, cpp_year, by=c("pop"))
+gdd465_all_new$CPP_YEAR<-as.factor(gdd465_all_new$CPP_YEAR)
+
+gdd_all_new<-left_join(gdd_all, cpp_year, by="pop")
+gdd_all_new$CPP_YEAR<-as.factor(gdd_all_new$CPP_YEAR)
+
+
+```
+
+```{r echo=FALSE, include=FALSE}
+#GDD deadlines averaged across all years
+gdd_summaries<-gdd_all_new %>% filter(interval!="NA") %>% group_by(pop) %>% dplyr::summarise(gdd465_mean=mean(gdd465), gdd465_sd=sd(gdd465), gdd465_mean=mean(gdd465), gdd465_sd=sd(gdd465), latitude=mean(latitude), country=first(country), only_2008=first(only_2008))
+
+lat_gdd_average<-ggplot(filter(gdd_summaries, only_2008=="n"), aes(x=latitude, y=gdd465_mean, fill=country)) + geom_point(shape=21) + scale_fill_manual(values=c("black", "gray")) + geom_errorbar(aes(ymin=gdd465_mean-gdd465_sd, ymax=gdd465_mean+gdd465_sd, color=country)) + scale_color_manual(values=c("black","gray")) + theme_bw() + theme(legend.position="bottom") + xlab("Latitude (N)") + ylab("GDD Deadline (ordinal day)")
+
+```
+
+```{r echo=FALSE, include=FALSE}
+#plotting GDD deadlines and CPP
+#black=Japan, gray=US / circle=2018, square=2008 / solid line=2018, dashed line=2008
+
+gdd_08 <- ggplot(filter(gdd465_all_new, year==2007, CPP_YEAR==2008), aes(x=gdd465, y=Estimate, fill=country)) + scale_fill_manual(values=c("black","gray"), name="Country") + geom_point(size=4, stroke=1, shape=22) + stat_smooth(method=lm, se=FALSE, aes(color=country), linetype="longdash") + scale_color_manual(values=c("black","gray"), name="Country") +
+  theme(legend.position=c(.25,.25), text=element_text(size=22),
+        panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+        panel.background = element_blank(), axis.line = element_line(colour = "black")) + 
+    xlab("GDD Deadline 2007 (ordinal day)") + ylab("CPP (h), 2008") + ylim(12.3,14.2)
+
+gdd_18 <- ggplot(filter(gdd465_all_new, year==2017, CPP_YEAR==2018), aes(x=gdd465, y=Estimate, fill=country)) + scale_fill_manual(values=c("black","gray"), name="Country") + geom_point(size=4, stroke=1, shape=21) + stat_smooth(method=lm, se=FALSE, aes(color=country)) + scale_color_manual(values=c("black","gray"), name="Country") +
+  theme(legend.position=c(.25,.25), text=element_text(size=22),
+        panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+        panel.background = element_blank(), axis.line = element_line(colour = "black")) + 
+xlab("GDD Deadline 2017 (ordinal day)") + ylab("CPP (h), 2018") + ylim(12.3, 14.2)
+
+```
+
+```{r echo=FALSE, include=FALSE}
+#plotting CPP by GDD deadlines averaged over intervals
+#black=Japan, gray=US / circle=2018, square=2008 / solid line=2018, dashed line=2008
+
+interval_summaries<-gdd_all_new %>% filter(interval!="NA") %>% group_by(pop, interval, CPP_YEAR) %>% dplyr::summarise(gdd465_mean=mean(gdd465), gdd465_sd=sd(gdd465), cpp=mean(Estimate), latitude=mean(latitude), country=first(country), only_2008=first(only_2008))
+
+gdd_cpp_interval_18<-ggplot(filter(interval_summaries, interval=="y2008-2017", CPP_YEAR==2018), aes(x=gdd465_mean, y=cpp, fill=country)) + geom_point(size=4, stroke=1, shape=21) + scale_fill_manual(values=c("black","gray"), name="Country") + stat_smooth(method=lm, se=FALSE, aes(color=country)) + scale_color_manual(values=c("black", "gray"), name="Country") +   theme(legend.position=c(.25,.25), text=element_text(size=22),
+        panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+        panel.background = element_blank(), axis.line = element_line(colour = "black")) + 
+  xlab("Mean GDD deadline 2008-2017 \n(ordinal day)") + ylab("CPP, 2018 (h)") + ylim(12.3, 14.2)
+
+gdd_cpp_interval_08<-ggplot(filter(interval_summaries, interval=="y1998-2007", CPP_YEAR==2008), aes(x=gdd465_mean, y=cpp, fill=country)) + geom_point(size=4, stroke=1, shape=22) + scale_fill_manual(values=c("black","gray"), name="Country") + stat_smooth(method=lm, se=FALSE, aes(color=country), linetype="longdash") + scale_color_manual(values=c("black", "gray"), name="Country") +   theme(legend.position=c(.25,.25), text=element_text(size=22),
+        panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+        panel.background = element_blank(), axis.line = element_line(colour = "black")) + 
+  xlab("Mean GDD deadline 1998-2007 \n(ordinal day)") + ylab("CPP, 2008 (h)") + ylim(12.3, 14.2)
+
+```
+
+```{r echo=FALSE, include=FALSE}
+#FIG 4
+gdd_cpp_plot<-plot_grid(gdd_08, gdd_18, gdd_cpp_interval_08, gdd_cpp_interval_18, nrow=2, labels="AUTO")
+
+```
+
+```{r echo=FALSE, warning=FALSE}
+#FIG S5A
+#black=Japan, gray=US / circle=2018, square=2008 / solid line=2018, dashed line=2008
+
+gdd_by_interval<-ggplot(filter(interval_summaries, CPP_YEAR==2018), aes(x=latitude, y=gdd465_mean, fill=country, shape=interval)) + 
+  geom_point(size=3) + scale_fill_manual(values=c("black", "gray"), name="Country") + scale_shape_manual(values=c(22,21), name="Period") + geom_errorbar(aes(ymin=gdd465_mean-gdd465_sd, ymax=gdd465_mean+gdd465_sd, color=country)) +
+  stat_smooth(method=lm, se=FALSE, aes(linetype=interval, color=country)) + scale_linetype_manual(values=c("longdash","solid"), name="Period") + 
+  scale_color_manual(values=c("black","gray"), name="Country") +
+  theme(legend.position=c(.8,.8), text=element_text(size=16),
+        panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+        panel.background = element_blank(), axis.line = element_line(colour = "black")) + 
+  xlab("Latitude") + ylab("Mean GDD Deadline")
+
+```
+
+```{r echo=FALSE, include=FALSE}
+data_18<-gdd465_all_new %>% filter(CPP_YEAR==2018) %>% filter(year==2017)
+model1<-lm(Estimate~gdd465*country, data=data_18)
+
+data_08<-gdd465_all_new %>% filter(CPP_YEAR==2008) %>% filter(year==2007)
+model2<-lm(Estimate~gdd465*country, data=data_08)
+
+model3<-lm(cpp~gdd465_mean*country, data=filter(interval_summaries, interval=="y2008-2017", CPP_YEAR==2018))
+model4<-lm(cpp~gdd465_mean*country, data=filter(interval_summaries, interval=="y1998-2007", CPP_YEAR==2008))
+
+anova(model1)
+anova(model2)
+anova(model3)
+anova(model4)
+
+```
+
+```{r echo=FALSE, include=FALSE}
+#2015 Diapause Incidence Field Trial
+field_data<-read.csv("DI_2015_FIELD.csv")
+field_data$WeekDate <- reorder(field_data$WeekDate, field_data$Week)
+
+#field eggs only
+field.model.fit <- drm(DI ~ DOY, data = field_data, fct = LL.5())
+summary(field.model.fit)
+# estimate the 50% intercept
+cpp_field<-data.frame(ED(field.model.fit, 50))
+
+
+field_data_plot<-ggplot(field_data, aes(x=DOY, y=DI)) + geom_point(size=3, shape=21, fill="gray") + 
+  theme(legend.position=c(.8,.25), text=element_text(size=24),
+        panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+        panel.background = element_blank(), axis.line = element_line(colour = "black")) + 
+xlab("Ordinal day (2015)") + ylab("Diapause incidence") + geom_vline(aes(xintercept=cpp_field$Estimate), linetype="dotted") + coord_cartesian(xlim=c(193,365))
+
+#2014 GDD diagram
+man2014<-read.csv("2014_Mean_Temp_MAN.csv") %>% gather(degreetype, degrees, "CountDegrees":"UncountDegrees")
+
+man2014_gdd_plot<-ggplot(filter(man2014, DOY_2014>193), aes(x=DOY_2014, y=degrees, fill=degreetype)) +
+    theme(text=element_text(size=24), legend.position="none",
+        panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+        panel.background = element_blank(), axis.line = element_line(colour = "black")) + 
+  geom_bar(stat="identity", width=1) + 
+  scale_fill_manual(values=c("dark gray","light gray")) + 
+  geom_hline(yintercept=10, linetype="dashed") + geom_vline(xintercept=251) +
+  xlab("Ordinal Day (2014)") + ylab("Mean Daily Temp (C)")
+
+
+#Fig3
+field_and_gdd2014<-plot_grid(field_data_plot, man2014_gdd_plot, nrow=2, align="hv", labels="AUTO")
+
+```
+
+```{r}
+#climate variation data
+tmean_us<-read.csv("Monthly_Tmean_US.csv", check.names=FALSE) %>% gather(year, meantemp, "1998":"2018", factor_key=FALSE)
+#In order to look at winter temperatures, need to combine Nov/Dec with Jan/Feb/March of the following year. January and February are reassigned in this table to the previous year to create seasonal years
+tmean_us$year<-as.numeric(tmean_us$year) 
+tmean_us$seasonalyear<-if_else(tmean_us$month %in% c("Jan","Feb","Mar"), tmean_us$year-1, tmean_us$year)
+
+#make a list of the coldest months by seasonal year and location
+coldest_months_US <- tmean_us %>% group_by(pop, seasonalyear) %>% slice(which.min(meantemp)) %>% filter(!(seasonalyear %in% c(1997,2018))) %>% select(pop, seasonalyear, month)
+
+tmin_us<-read.csv("AvgTmin_US.csv", check.names=FALSE) %>% gather(year, mintemp, "1998":"2018", factor_key=FALSE)
+tmin_us$year<-as.numeric(tmin_us$year) 
+tmin_us$seasonalyear<-if_else(tmin_us$month %in% c("Jan","Feb","Mar"), tmin_us$year-1, tmin_us$year) 
+tmin_us<-filter(tmin_us, !(seasonalyear %in% c(1997,2018))) 
+
+tmax_us<-read.csv("AvgTmax_US.csv", check.names=FALSE) %>% gather(year, maxtemp, "1998":"2018", factor_key=FALSE)
+tmax_us$year<-as.numeric(tmax_us$year) 
+tmax_us$seasonalyear<-if_else(tmax_us$month %in% c("Jan","Feb","Mar"), tmax_us$year-1, tmax_us$year) 
+tmax_us<-filter(tmax_us, !(seasonalyear %in% c(1997,2018))) 
+
+#make a table of the min, mean, and max temperature of the coldest month of each seasonal year in each location
+all_temps_us<-left_join(tmin_us, tmean_us)
+all_temps_us<-left_join(all_temps_us, tmax_us)
+all_temps_us<-select(all_temps_us, pop, month, seasonalyear, mintemp, meantemp, maxtemp)
+cold_month_temps_us<-inner_join(all_temps_us, coldest_months_US)
+cold_month_temps_us$country=rep("US",nrow(cold_month_temps_us))
+
+#same process for Japan
+tmean_jp<-read.csv("Monthly_Tmean_JP.csv", check.names=FALSE) %>% gather(year, meantemp, "1998":"2018", factor_key=FALSE)
+#In order to look at winter temperatures, need to combine Nov/Dec with Jan/Feb/March of the following year. January and February are reassigned in this table to the previous year to create seasonal years
+tmean_jp$year<-as.numeric(tmean_jp$year) 
+tmean_jp$seasonalyear<-if_else(tmean_jp$month %in% c("Jan","Feb","Mar"), tmean_jp$year-1, tmean_jp$year)
+
+#make a list of the coldest months by seasonal year and location
+coldest_months_jp <- tmean_jp %>% group_by(pop, seasonalyear) %>% slice(which.min(meantemp)) %>% filter(!(seasonalyear %in% c(1997,2018))) %>% select(pop, seasonalyear, month)
+
+tmin_jp<-read.csv("AvgTmin_JP.csv", check.names=FALSE) %>% gather(year, mintemp, "1998":"2018", factor_key=FALSE)
+tmin_jp$year<-as.numeric(tmin_jp$year) 
+tmin_jp$seasonalyear<-if_else(tmin_jp$month %in% c("Jan","Feb","Mar"), tmin_jp$year-1, tmin_jp$year) 
+tmin_jp<-filter(tmin_jp, !(seasonalyear %in% c(1997,2018))) 
+
+tmax_jp<-read.csv("AvgTmax_JP.csv", check.names=FALSE) %>% gather(year, maxtemp, "1998":"2018", factor_key=FALSE)
+tmax_jp$year<-as.numeric(tmax_jp$year) 
+tmax_jp$seasonalyear<-if_else(tmax_jp$month %in% c("Jan","Feb","Mar"), tmax_jp$year-1, tmax_jp$year) 
+tmax_jp<-filter(tmax_jp, !(seasonalyear %in% c(1997,2018))) 
+
+#make a table of the min, mean, and max temperature of the coldest month of each seasonal year in each location
+all_temps_jp<-left_join(tmin_jp, tmean_jp)
+all_temps_jp<-left_join(all_temps_jp, tmax_jp)
+all_temps_jp<-select(all_temps_jp, pop, month, seasonalyear, mintemp, meantemp, maxtemp)
+cold_month_temps_jp<-inner_join(all_temps_jp, coldest_months_jp)
+cold_month_temps_jp$country=rep("JP",nrow(cold_month_temps_jp))
+
+#add latitude information and combine US/Japan
+locations<-read.csv("mapping_pops_cpp_expt.csv")
+cold_month_temps_us<-left_join(cold_month_temps_us, dplyr::select(locations, pop, latitude, only_2008), by=c("pop"))
+cold_month_temps_jp<-left_join(cold_month_temps_jp, dplyr::select(locations, pop, latitude, only_2008), by=c("pop"))
+cold_months_all<-rbind(cold_month_temps_us, cold_month_temps_jp)
+
+cold_months_all<-mutate(cold_months_all, interval=case_when(seasonalyear<=2017 & seasonalyear>=2008 ~ 'y2008-2017', seasonalyear<2008 ~ 'y1998-2007'))
+
+#calculate annual range and annual standard deviation
+#start with monthly means
+us_var <- tmean_us %>% filter(!(seasonalyear %in% c(1997,2018))) %>% group_by(pop, seasonalyear) %>%
+  dplyr::summarise(tempannualrange=max(meantemp)-min(meantemp), tempseasonality=sd(meantemp))
+jp_var <- tmean_jp %>% filter(!(seasonalyear %in% c(1997,2018))) %>% group_by(pop, seasonalyear) %>%
+  dplyr::summarise(tempannualrange=max(meantemp)-min(meantemp), tempseasonality=sd(meantemp))
+all_var<-rbind(us_var, jp_var)
+all_var<-left_join(all_var, dplyr::select(locations, pop, latitude, country, only_2008), by=c("pop"))
+
+all_var<-mutate(all_var, interval=case_when(seasonalyear<=2017 & seasonalyear>=2008 ~ 'y2008-2017', seasonalyear<2008 ~ 'y1998-2007'))
+
+tf_us <- read.csv("TotalFrostDays_US.csv", check.names=FALSE) %>% gather(year, TotalFrostDays, "1998":"2018", factor_key=FALSE)
+tf_us$year<-as.numeric(tf_us$year)
+
+tf_jp <- read.csv("TotalFrostDays_JP.csv", check.names=FALSE) %>% gather(year, TotalFrostDays, "1998":"2018", factor_key=FALSE)
+tf_jp$year<-as.numeric(tf_jp$year)
+#adding latitudes
+locations<-read.csv("mapping_pops_cpp_expt.csv")
+tf_us<-left_join(tf_us, dplyr::select(locations, pop, latitude, country, only_2008), by=c("pop"))
+tf_jp<-left_join(tf_jp, dplyr::select(locations, pop, latitude, country, only_2008), by=c("pop"))
+tf_all<-rbind(tf_us, tf_jp)
+tf_all$pop<-as.factor(tf_all$pop)
+tf_all<-mutate(filter(tf_all, year!=2018), interval=case_when(year<=2017 & year>=2008 ~ 'y2008-2017',
+                                                  year<2008 ~ 'y1998-2007'))
+
+frost_all<-select(left_join(ff_all, tf_all), pop, latitude, country, year, DFF, TotalFrostDays, only_2008, interval)
+names(frost_all)[names(frost_all) == 'year']<-'seasonalyear'
+
+clim_vars_all<-left_join(cold_months_all, all_var)
+names(clim_vars_all)[names(clim_vars_all) == 'month'] <- 'coldest_month'
+names(clim_vars_all)[names(clim_vars_all) == 'mintemp'] <- 'mintemp_coldest_month'
+names(clim_vars_all)[names(clim_vars_all) == 'meantemp'] <- 'meantemp_coldest_month'
+names(clim_vars_all)[names(clim_vars_all) == 'maxtemp'] <- 'maxtemp_coldest_month'
+clim_vars_all<-select(clim_vars_all, pop, latitude, country, seasonalyear, coldest_month, mintemp_coldest_month, meantemp_coldest_month, maxtemp_coldest_month, tempannualrange, tempseasonality, interval)
+
+clim_vars_all<-left_join(clim_vars_all, frost_all)
+
+cpp_year<-dplyr::select(read.csv("cpp_calcs_filtered.csv"), pop, Estimate, year) %>% filter(year!="1988") %>% dplyr::rename("CPP_YEAR"="year")
+
+clim_vars_all<-left_join(clim_vars_all, cpp_year, by=c("pop"))
+clim_vars_all$CPP_YEAR<-as.factor(clim_vars_all$CPP_YEAR)
+
+```
+
+```{r}
+cp<-dplyr::select(filter(clim_vars_all, CPP_YEAR==2018), mintemp_coldest_month, meantemp_coldest_month, maxtemp_coldest_month, tempannualrange, tempseasonality, DFF, TotalFrostDays)
+names(cp)<-c("ColdestMonthMin","ColdestMonthMean","ColdestMonthMax","TempAnnualRange","TempSeasonality","DateFirstFrost","TotalFrostDays")
+cv<-dplyr::select(filter(clim_vars_all, CPP_YEAR==2018), pop, latitude, country, seasonalyear, interval)
+
+```
+
+```{r}
+clim.pca <- prcomp(cp,
+                 center = TRUE,
+                 scale. = TRUE)
+pca_by_country<-ggbiplot(clim.pca, groups=cv$country) + 
+        theme(text=element_text(size=16), legend.position=c(.8,.8),
+        panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+        panel.background = element_blank(), axis.line = element_line(colour = "black")) + 
+  xlim(values=c(-3,3)) + ylim(values=c(-3,3)) +
+  scale_color_manual(name="Country", values=c("black","gray"))
+
+pca_by_interval<-ggbiplot(clim.pca, groups=cv$interval) + 
+        theme(text=element_text(size=16), legend.position=c(.8,.8),
+        panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+        panel.background = element_blank(), axis.line = element_line(colour = "black")) + 
+  xlim(values=c(-3,3)) + ylim(values=c(-3,3)) +
+  scale_color_manual(name="Interval", values=c("black","gray"))
+
+pca_by_year<-ggbiplot(clim.pca, groups=cv$seasonalyear) + 
+        theme(text=element_text(size=18), legend.position="bottom",
+        panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+        panel.background = element_blank(), axis.line = element_line(colour = "black")) + 
+  xlim(values=c(-3,3)) + ylim(values=c(-3,3)) +
+  scale_color_gradient(name="Year")
+
+pca_by_latitude<-ggbiplot(clim.pca, groups=cv$latitude) +         
+  theme(text=element_text(size=18), legend.position="bottom",
+        panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+        panel.background = element_blank(), axis.line = element_line(colour = "black")) + 
+  xlim(values=c(-3,3)) + ylim(values=c(-3,3)) +
+  scale_color_gradient(name="Latitude")
+
+pcas_for_fig<-plot_grid(pca_by_country, pca_by_interval, nrow=1)
+```
+
+```{r}
+#FIG S5
+plot_grid(gdd_by_interval, pcas_for_fig, nrow=2, labels="AUTO")
+```
+
