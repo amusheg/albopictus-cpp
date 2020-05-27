@@ -231,10 +231,10 @@ wilcox.test((filter(DI_short, country=="JP", year==2018) %>% arrange(lat))$DI, (
 
 #FIG S3
 #black=Japan, gray=US / circle=2018, square=2008 / solid line=2018, dashed line=2008
-country_DI_bw<-ggplot(DI_short, aes(x=lat, y=DI, fill=country, shape=year)) + scale_fill_manual(values=c("gray","black"), name="Country") + scale_shape_manual(values=c(22,21), name="Year") + geom_point(size=3) +   theme(legend.position=c(.8,.25), text=element_text(size=18),
+country_DI_bw<-ggplot(DI_short, aes(x=lat, y=DI, fill=country, shape=year)) + scale_fill_manual(values=c("black","gray"), name="Country") + scale_shape_manual(values=c(22,21), name="Year") + geom_point(size=3) +   theme(legend.position=c(.8,.25), text=element_text(size=18),
         panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
         panel.background = element_blank(), axis.line = element_line(colour = "black")) + 
-xlab("Latitude") + ylab("Short-day diapause incidence") + stat_smooth(aes(linetype=year, color=country), se=FALSE) + scale_linetype_manual(values=c("longdash","solid"), name="Year") + scale_color_manual(values=c("gray","black"), name="Country")
+xlab("Latitude") + ylab("Short-day diapause incidence") + stat_smooth(aes(linetype=year, color=country), se=FALSE) + scale_linetype_manual(values=c("longdash","solid"), name="Year") + scale_color_manual(values=c("black","gray"), name="Country")
 
 ```
 
