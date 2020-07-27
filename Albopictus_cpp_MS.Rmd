@@ -330,15 +330,6 @@ gdd_all$gdd<-(gdd_all$gdd400 + gdd_all$gdd465)/2
 
 ```
 
-```{r}
-#photoperiods on deadline dates
-PP_us <- read.csv("deadline465_pp_US.csv", check.names=FALSE) %>% gather(year, deadline_daylength, "1998":"2018", factor_key=FALSE)
-PP_jp <- read.csv("deadline465_pp_jp.csv", check.names=FALSE) %>% gather(year, deadline_daylength, "1998":"2018", factor_key=FALSE)
-PP_pops<-rbind(PP_us, PP_jp)
-PP_pops$year<-as.numeric(PP_pops$year)
-```
-
-
 ```{r, echo=FALSE, include=FALSE}
 #FIG S4
 gdd_deadline_plots<-ggplot(filter(gdd465_all, only_2008=="n", year!=2018), aes(x=latitude, y=gdd465, fill=country)) + scale_fill_manual(values=c("black", "gray"), name="Country") + geom_point(shape=21, size=2) + facet_wrap(~year) + xlab("Latitude") + ylab("GDD Deadline (ordinal day)") + theme_bw() + 
@@ -353,14 +344,7 @@ gdd465_all_new$CPP_YEAR<-as.factor(gdd465_all_new$CPP_YEAR)
 
 gdd_all_new<-left_join(gdd_all, cpp_year, by="pop")
 gdd_all_new$CPP_YEAR<-as.factor(gdd_all_new$CPP_YEAR)
-
-
 ```
-
-```{r}
-gdd_all_new<-left_join(gdd_all_new, PP_pops, by=c("pop","year"))
-```
-
 
 ```{r echo=FALSE, include=FALSE}
 #GDD deadlines averaged across all years
@@ -401,25 +385,6 @@ xlab("GDD Deadline 2018 (ordinal day)") + ylab("CPP (h), 2018") + ylim(12.3, 14.
 
 ```
 
-```{r}
-#CPP vs. photoperiod on deadline day
-gdd_pp_08 <- ggplot(filter(gdd_all_new, year==2007, CPP_YEAR==2008), aes(x=deadline_daylength, y=Estimate, fill=country)) + scale_fill_manual(values=c("black","gray"), name="Country") + geom_point(size=4, stroke=1, shape=22) + stat_smooth(method=lm, se=FALSE, aes(color=country), linetype="longdash") + scale_color_manual(values=c("black","gray"), name="Country") +
-  theme(legend.position=c(.75,.25), text=element_text(size=22),
-        panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
-        panel.background = element_blank(), axis.line = element_line(colour = "black")) + 
-    xlab("2007 Deadline Day Length") + ylab("CPP (h), 2008") + ylim(12.3,14.2) 
-
-gdd_pp_18 <- ggplot(filter(gdd_all_new, year==2017, CPP_YEAR==2018), aes(x=deadline_daylength, y=Estimate, fill=country)) + scale_fill_manual(values=c("black","gray"), name="Country") + geom_point(size=4, stroke=1, shape=21) + stat_smooth(method=lm, se=FALSE, aes(color=country)) + scale_color_manual(values=c("black","gray"), name="Country") +
-  theme(legend.position=c(.75,.25), text=element_text(size=22),
-        panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
-        panel.background = element_blank(), axis.line = element_line(colour = "black")) + 
-xlab("2017 Deadline Day Length") + ylab("CPP (h), 2018") + ylim(12.3, 14.2)
-
-
-```
-
-
-
 ```{r echo=FALSE, include=FALSE}
 #plotting CPP by GDD deadlines averaged over intervals
 #black=Japan, gray=US / circle=2018, square=2008 / solid line=2018, dashed line=2008
@@ -442,7 +407,7 @@ gdd_cpp_interval_08<-ggplot(filter(interval_summaries, interval=="y1998-2007", C
 #FIG 4
 gdd_cpp_plot_decade<-plot_grid(gdd_cpp_interval_08, gdd_cpp_interval_18, nrow=2, labels="AUTO")
 #FIG S5
-gdd_cpp_plot_year<-plot_grid(gdd_08, gdd_pp_08, gdd_18, gdd_pp_18, nrow=2, labels="AUTO")
+gdd_cpp_plot_year<-plot_grid(gdd_08, gdd_18, nrow=2, labels="AUTO")
 ```
 
 ```{r echo=FALSE, warning=FALSE}
