@@ -33,7 +33,6 @@ install.packages("ggbiplot")
 
 ```{r message=FALSE, echo=FALSE, include=FALSE}
 library("papeR")
-library("flextable")
 library("drc") #3.0.1
 library("knitr") #1.25
 library("tidyverse") #1.2.1
@@ -313,8 +312,7 @@ gdd400_us<-left_join(gdd400_us, dplyr::select(locations, pop, latitude, country,
 gdd400_jp<-left_join(gdd400_jp, dplyr::select(locations, pop, latitude, country, only_2008), by=c("pop"))
 gdd400_all<-rbind(gdd400_us, gdd400_jp)
 gdd400_all$pop<-as.factor(gdd400_all$pop)
-gdd400_all<-mutate(gdd400_all, interval=case_when(year<=2017 & year>=2008 ~ 'y2008-2017',
-                                                  year<2008 ~ 'y1998-2007'))
+gdd400_all<-mutate(gdd400_all, interval=case_when(year<=2017 & year>=2008 ~ 'y2008-2017',year<2008 ~ 'y1998-2007'))
 
 gdd465_us <- read.csv("GDD465_US.csv", check.names=FALSE) %>% gather(year, gdd465, "1998":"2018", factor_key=FALSE)
 gdd465_us$year<-as.numeric(gdd465_us$year)
@@ -331,6 +329,15 @@ gdd_all<-left_join(gdd400_all, gdd465_all)
 gdd_all$gdd<-(gdd_all$gdd400 + gdd_all$gdd465)/2
 
 ```
+
+```{r}
+#photoperiods on deadline dates
+PP_us <- read.csv("deadline465_pp_US.csv", check.names=FALSE) %>% gather(year, deadline_daylength, "1998":"2018", factor_key=FALSE)
+PP_jp <- read.csv("deadline465_pp_jp.csv", check.names=FALSE) %>% gather(year, deadline_daylength, "1998":"2018", factor_key=FALSE)
+PP_pops<-rbind(PP_us, PP_jp)
+PP_pops$year<-as.numeric(PP_pops$year)
+```
+
 
 ```{r, echo=FALSE, include=FALSE}
 #FIG S4
@@ -349,6 +356,11 @@ gdd_all_new$CPP_YEAR<-as.factor(gdd_all_new$CPP_YEAR)
 
 
 ```
+
+```{r}
+gdd_all_new<-left_join(gdd_all_new, PP_pops, by=c("pop","year"))
+```
+
 
 ```{r echo=FALSE, include=FALSE}
 #GDD deadlines averaged across all years
@@ -389,6 +401,25 @@ xlab("GDD Deadline 2018 (ordinal day)") + ylab("CPP (h), 2018") + ylim(12.3, 14.
 
 ```
 
+```{r}
+#CPP vs. photoperiod on deadline day
+gdd_pp_08 <- ggplot(filter(gdd_all_new, year==2007, CPP_YEAR==2008), aes(x=deadline_daylength, y=Estimate, fill=country)) + scale_fill_manual(values=c("black","gray"), name="Country") + geom_point(size=4, stroke=1, shape=22) + stat_smooth(method=lm, se=FALSE, aes(color=country), linetype="longdash") + scale_color_manual(values=c("black","gray"), name="Country") +
+  theme(legend.position=c(.75,.25), text=element_text(size=22),
+        panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+        panel.background = element_blank(), axis.line = element_line(colour = "black")) + 
+    xlab("2007 Deadline Day Length") + ylab("CPP (h), 2008") + ylim(12.3,14.2) 
+
+gdd_pp_18 <- ggplot(filter(gdd_all_new, year==2017, CPP_YEAR==2018), aes(x=deadline_daylength, y=Estimate, fill=country)) + scale_fill_manual(values=c("black","gray"), name="Country") + geom_point(size=4, stroke=1, shape=21) + stat_smooth(method=lm, se=FALSE, aes(color=country)) + scale_color_manual(values=c("black","gray"), name="Country") +
+  theme(legend.position=c(.75,.25), text=element_text(size=22),
+        panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+        panel.background = element_blank(), axis.line = element_line(colour = "black")) + 
+xlab("2017 Deadline Day Length") + ylab("CPP (h), 2018") + ylim(12.3, 14.2)
+
+
+```
+
+
+
 ```{r echo=FALSE, include=FALSE}
 #plotting CPP by GDD deadlines averaged over intervals
 #black=Japan, gray=US / circle=2018, square=2008 / solid line=2018, dashed line=2008
@@ -411,7 +442,7 @@ gdd_cpp_interval_08<-ggplot(filter(interval_summaries, interval=="y1998-2007", C
 #FIG 4
 gdd_cpp_plot_decade<-plot_grid(gdd_cpp_interval_08, gdd_cpp_interval_18, nrow=2, labels="AUTO")
 #FIG S5
-gdd_cpp_plot_year<-plot_grid(gdd_08, gdd_18, nrow=2, labels="AUTO")
+gdd_cpp_plot_year<-plot_grid(gdd_08, gdd_pp_08, gdd_18, gdd_pp_18, nrow=2, labels="AUTO")
 ```
 
 ```{r echo=FALSE, warning=FALSE}
@@ -481,6 +512,45 @@ man2014_gdd_plot<-ggplot(filter(man2014, DOY_2014>193), aes(x=DOY_2014, y=degree
 field_and_gdd2014<-plot_grid(field_data_plot, man2014_gdd_plot, nrow=2, align="hv", labels="AUTO")
 
 ```
+
+```{r}
+sample_locations_2017<-read.csv("MeanTempUSAandJapan2017.csv") %>% gather(location, temp, "MAN":"TAK")
+sample_locations_2017$UncountDegrees<-if_else(sample_locations_2017$temp<=10,sample_locations_2017$temp,10)
+sample_locations_2017$CountDegrees<-if_else(sample_locations_2017$temp<=10,0,sample_locations_2017$temp-10)
+
+sample_locations_2017_reshape <- dplyr::select(sample_locations_2017, DOY, location, CountDegrees, UncountDegrees) %>% gather(degreetype, degrees, "CountDegrees":"UncountDegrees")
+
+sample_locations_2017_reshape$location<-factor(sample_locations_2017_reshape$location, levels=c("BRU","FAY","MAN","KAG","TAK","SEN"))
+
+sample_locations_2017_reshape$deadline2017<-case_when(
+  sample_locations_2017_reshape$location == "BRU" ~ 289,
+  sample_locations_2017_reshape$location == "FAY" ~ 276,
+  sample_locations_2017_reshape$location == "MAN" ~ 263,
+  sample_locations_2017_reshape$location == "KAG" ~ 274,
+  sample_locations_2017_reshape$location == "TAK" ~ 257,
+  sample_locations_2017_reshape$location == "SEN" ~ 246,)
+
+location_labels<-c("BRU (31.3 N)","FAY (35.03 N)","MAN (38.63 N)","KAG (31.6 N)","TAK (35.35 N)","SEN (38.29 N)")
+names(location_labels)<-c("BRU","FAY","MAN","KAG","TAK","SEN")
+
+sample_locations_gdd<-ggplot(filter(sample_locations_2017_reshape, DOY>180), aes(x=DOY, y=degrees, fill=degreetype)) +
+    theme(text=element_text(size=24), legend.position="none",
+        panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+        panel.background = element_blank(), axis.line = element_line(colour = "black")) + 
+  geom_bar(stat="identity", width=1) + 
+  scale_fill_manual(values=c("dark gray","light gray")) + 
+  geom_hline(yintercept=10, linetype="dashed") + 
+  xlab("Ordinal Day (2017)") + ylab("Mean Daily Temp (C)") + geom_vline(aes(xintercept=deadline2017)) +
+  facet_wrap(~location, labeller=labeller(location=location_labels))
+
+```
+
+```{r}
+#Fig S4 two parts
+gdd_examples<-plot_grid(gdd_deadline_plots, sample_locations_gdd, nrow=2, labels="AUTO")
+
+```
+
 
 ```{r}
 #climate variation data
