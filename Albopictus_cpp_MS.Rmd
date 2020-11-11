@@ -21,7 +21,6 @@ install.packages("stringr")
 install.packages("lubridate")
 install.packages(c("maps", "mapdata"))
 devtools::install_github("dkahle/ggmap")
-install.packages("scatterpie")
 install.packages("ggedit")
 install.packages("ggrepel")
 install.packages("papeR")
@@ -33,21 +32,17 @@ install.packages("ggbiplot")
 
 ```{r message=FALSE, echo=FALSE, include=FALSE}
 library("papeR")
+library("knitr") 
 library("drc") #3.0.1
-library("knitr") #1.25
-library("tidyverse") #1.2.1
+library("tidyverse") #1.3.0
 library("stringr") #1.4.0
-library("geosphere") #1.5.10
 library("lubridate") #1.7.4
-library("maps")
-library("mapdata")
-library("ggedit")
+library("maps") #3.3.0
+library("mapdata") #2.3.0
+library("cowplot") #1.0.0
+library("stats") #3.6.2
+library("ggbiplot") #0.55
 library("ggrepel")
-library("cowplot")
-library("ggrepel")
-library("stats")
-library("ggbiplot")
-
 ```
 
 ```{r setup, include=FALSE}
@@ -144,10 +139,6 @@ colnames(cpp_2008)[colnames(cpp_2008)=="Std..Error"] <- "StdError"
 popdata_2008<-DI_summary_2008 %>% group_by(pop) %>% 
   dplyr::summarize(country=first(country), lat=first(lat), year=first(year)) 
 cpp_2008<-right_join(cpp_2008, popdata_2008, by="pop")
-#1988 data not used in present study but can load it anyway
-cpp_1988<-data.frame(read.csv("CPP_1988.csv")) 
-cpp_1988$pop<-na_if(cpp_1988$pop, "NA")
-cpp_1988$StdError<-na_if(cpp_1988$StdError, "NA")
 
 #2008 and 2018 data
 cpp_all<-rbind(cpp_2008, cpp_2018) 
@@ -172,14 +163,6 @@ quality_control_fig<-plot_grid(yield_plot, filter_compare_plot, labels="AUTO")
 ```{r cppmodel, echo=FALSE, include=FALSE}
 cppmodel<-lm(Estimate~lat*country*year, data=cpp_all)
 cppmodel_result<-data.frame(anova(cppmodel))
-```
-
-```{r, echo=FALSE, include=FALSE}
-#basic breakdown
-ggplot(cpp_all, aes(x=lat, y=Estimate, color=country)) + 
-  geom_point() + 
-  geom_errorbar(aes(ymin=Estimate-StdError, ymax=Estimate+StdError), na.rm=TRUE) + 
-  facet_grid(~year) + stat_smooth(method=lm, se=FALSE)
 ```
 
 ```{r, echo=FALSE, include=FALSE}
@@ -241,16 +224,7 @@ xlab("Latitude") + ylab("Short-day diapause incidence") + stat_smooth(aes(linety
 usa<-map_data("usa")
 jp<-map_data("world") %>% filter(region=="Japan")
 pops<-data.frame(read.csv("mapping_pops_cpp_expt.csv"))
-us_map<-ggplot() + geom_polygon(data = usa, aes(x=long, y = lat, group=group), fill=NA, color="blue") + 
-  coord_fixed(1.3) + geom_point(data = filter(pops, country=="US"), aes(x = longitude, y = latitude), size = 1) + xlim(c(-85, -65)) +
-  geom_label(data=filter(pops, country=="US"), aes(x=longitude, y=latitude, label=pop), hjust=0, label.padding=unit(0.1, "lines")) +
-  theme_bw() 
-japan_map<-ggplot() + geom_polygon(data = jp, aes(x=long, y = lat, group=group), fill=NA, color="red") + 
-  coord_fixed(1.3) + geom_point(data = filter(pops, country=="JP", only_2008=="n"), aes(x = longitude, y = latitude), size = 1)  + xlim(c(125, 147)) +
-  geom_label_repel(data=filter(pops, country=="JP", only_2008=="n"), aes(x=longitude, y=latitude, label=pop), hjust=0, label.padding=unit(0.1, "lines")) +
-  theme_bw() + theme(axis.title.x=element_blank(), axis.title.y=element_blank())
 
-#bw locations map
 us_map_bw<-ggplot() + geom_polygon(data = usa, aes(x=long, y = lat, group=group), fill=NA, color="dark gray") + 
   coord_fixed(1.3) + geom_point(data = filter(pops, country=="US"), aes(x = longitude, y = latitude), size = 2, shape=21, color="black", fill="gray", stroke=1) + xlim(c(-87, -65)) + ylim(c(24,48)) +
   geom_text_repel(data=filter(pops, country=="US"), aes(x=longitude, y=latitude, label=pop), hjust=0, label.padding=unit(0.1, "lines"), nudge_x=1.5, size=6) + theme_bw() + theme(text=element_text(size=24), plot.margin = unit(c(0,0,0,0), "cm"), panel.grid=element_line(size=0.1)) + xlab("") + ylab("")
@@ -364,24 +338,11 @@ gdd_08 <- ggplot(filter(gdd465_all_new, year==2007, CPP_YEAR==2008), aes(x=gdd46
         panel.background = element_blank(), axis.line = element_line(colour = "black")) + 
     xlab("GDD Deadline 2007 \n(ordinal day)") + ylab("CPP (h), 2008") + ylim(12.3,14.2)
 
-gdd_08_sameyear <- ggplot(filter(gdd465_all_new, year==2008, CPP_YEAR==2008), aes(x=gdd465, y=Estimate, fill=country)) + scale_fill_manual(values=c("black","gray"), name="Country") + geom_point(size=4, stroke=1, shape=22) + stat_smooth(method=lm, se=FALSE, aes(color=country), linetype="longdash") + scale_color_manual(values=c("black","gray"), name="Country") +
-  theme(legend.position=c(.25,.25), text=element_text(size=22),
-        panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
-        panel.background = element_blank(), axis.line = element_line(colour = "black")) + 
-    xlab("GDD Deadline 2008 \n(ordinal day)") + ylab("CPP (h), 2008") + ylim(12.3,14.2)
-
 gdd_18 <- ggplot(filter(gdd465_all_new, year==2017, CPP_YEAR==2018), aes(x=gdd465, y=Estimate, fill=country)) + scale_fill_manual(values=c("black","gray"), name="Country") + geom_point(size=4, stroke=1, shape=21) + stat_smooth(method=lm, se=FALSE, aes(color=country)) + scale_color_manual(values=c("black","gray"), name="Country") +
   theme(legend.position=c(.25,.25), text=element_text(size=22),
         panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
         panel.background = element_blank(), axis.line = element_line(colour = "black")) + 
 xlab("GDD Deadline 2017 \n(ordinal day)") + ylab("CPP (h), 2018") + ylim(12.3, 14.2)
-
-gdd_18_sameyear <- ggplot(filter(gdd465_all_new, year==2018, CPP_YEAR==2018), aes(x=gdd465, y=Estimate, fill=country)) + scale_fill_manual(values=c("black","gray"), name="Country") + geom_point(size=4, stroke=1, shape=21) + stat_smooth(method=lm, se=FALSE, aes(color=country)) + scale_color_manual(values=c("black","gray"), name="Country") +
-  theme(legend.position=c(.25,.25), text=element_text(size=22),
-        panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
-        panel.background = element_blank(), axis.line = element_line(colour = "black")) + 
-xlab("GDD Deadline 2018 (ordinal day)") + ylab("CPP (h), 2018") + ylim(12.3, 14.2)
-
 
 ```
 
@@ -410,21 +371,6 @@ gdd_cpp_plot_decade<-plot_grid(gdd_cpp_interval_08, gdd_cpp_interval_18, nrow=2,
 gdd_cpp_plot_year<-plot_grid(gdd_08, gdd_18, nrow=2, labels="AUTO")
 ```
 
-```{r echo=FALSE, warning=FALSE}
-#FIG S6A
-#black=Japan, gray=US / circle=2018, square=2008 / solid line=2018, dashed line=2008
-
-gdd_by_interval<-ggplot(filter(interval_summaries, CPP_YEAR==2018), aes(x=latitude, y=gdd465_mean, fill=country, shape=interval)) + 
-  geom_point(size=3) + scale_fill_manual(values=c("black", "gray"), name="Country") + scale_shape_manual(values=c(22,21), name="Period") + geom_errorbar(aes(ymin=gdd465_mean-gdd465_sd, ymax=gdd465_mean+gdd465_sd, color=country)) +
-  stat_smooth(method=lm, se=FALSE, aes(linetype=interval, color=country)) + scale_linetype_manual(values=c("longdash","solid"), name="Period") + 
-  scale_color_manual(values=c("black","gray"), name="Country") +
-  theme(legend.position=c(.8,.8), text=element_text(size=16),
-        panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
-        panel.background = element_blank(), axis.line = element_line(colour = "black")) + 
-  xlab("Latitude") + ylab("Mean GDD Deadline")
-
-```
-
 ```{r echo=FALSE, include=FALSE}
 data_18<-gdd465_all_new %>% filter(CPP_YEAR==2018) %>% filter(year==2017)
 model1<-lm(Estimate~gdd465*country, data=data_18)
@@ -439,6 +385,21 @@ anova(model1)
 anova(model2)
 anova(model3)
 anova(model4)
+
+```
+
+```{r echo=FALSE, warning=FALSE}
+#FIG S6A
+#black=Japan, gray=US / circle=2018, square=2008 / solid line=2018, dashed line=2008
+
+gdd_by_interval<-ggplot(filter(interval_summaries, CPP_YEAR==2018), aes(x=latitude, y=gdd465_mean, fill=country, shape=interval)) + 
+  geom_point(size=3) + scale_fill_manual(values=c("black", "gray"), name="Country") + scale_shape_manual(values=c(22,21), name="Period") + geom_errorbar(aes(ymin=gdd465_mean-gdd465_sd, ymax=gdd465_mean+gdd465_sd, color=country)) +
+  stat_smooth(method=lm, se=FALSE, aes(linetype=interval, color=country)) + scale_linetype_manual(values=c("longdash","solid"), name="Period") + 
+  scale_color_manual(values=c("black","gray"), name="Country") +
+  theme(legend.position=c(.8,.8), text=element_text(size=16),
+        panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+        panel.background = element_blank(), axis.line = element_line(colour = "black")) + 
+  xlab("Latitude") + ylab("Mean GDD Deadline")
 
 ```
 
@@ -513,8 +474,70 @@ sample_locations_gdd<-ggplot(filter(sample_locations_2017_reshape, DOY>180), aes
 ```{r}
 #Fig S4 two parts
 gdd_examples<-plot_grid(gdd_deadline_plots, sample_locations_gdd, nrow=2, labels="AUTO")
+```
+
+
+```{r}
+#range of possible deadlines
+alt_deadlines<-read.csv("gdd_alternate_deadlines.csv")
+#France location in 2009
+filter(alt_deadlines, Country=="FRA", Year==2009)
+```
+
+``` {r}
+#range of possible deadlines w/latitude/CPP info
+deadlines_range<-left_join(gdd_all_new, alt_deadlines, by=c("pop"="Location", "year"="Year")) %>% select(pop, year, latitude, country, only_2008, Estimate, CPP_YEAR, gdd465, Deadline_GDD_300, Deadline_GDD_350, Deadline_GDD_400, Deadline_GDD_450, Deadline_GDD_500, Deadline_GDD_550, Deadline_GDD_600) 
+
+ggplot(filter(deadlines_range, year==2017, CPP_YEAR==2018), aes(x=latitude, y=Deadline_GDD_600, fill=country)) + scale_fill_manual(values=c("black","gray"), name="Country") + geom_point(size=2, stroke=1, shape=21) + stat_smooth(method=lm, se=FALSE, aes(color=country)) + scale_color_manual(values=c("black","gray"), name="Country") +
+  theme(legend.position=c(.25,.25), text=element_text(size=22),
+        panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+        panel.background = element_blank(), axis.line = element_line(colour = "black")) + 
+xlab("Latitude") + ylab("Deadline") 
+
+data_18_range<-deadlines_range %>% filter(CPP_YEAR==2018) %>% filter(year==2017)
+model300<-lm(Estimate~Deadline_GDD_300*country, data=data_18_range)
+model350<-lm(Estimate~Deadline_GDD_350*country, data=data_18_range)
+model400<-lm(Estimate~Deadline_GDD_400*country, data=data_18_range)
+model450<-lm(Estimate~Deadline_GDD_450*country, data=data_18_range)
+model500<-lm(Estimate~Deadline_GDD_500*country, data=data_18_range)
+model550<-lm(Estimate~Deadline_GDD_550*country, data=data_18_range)
+model600<-lm(Estimate~Deadline_GDD_600*country, data=data_18_range)
+
+rsq<-c(summary(model300)$r.squared, summary(model300)$r.squared, summary(model350)$r.squared, summary(model400)$r.squared, summary(model450)$r.squared, summary(model500)$r.squared, summary(model550)$r.squared, summary(model600)$r.squared)
+
+data_18_range_long<-pivot_longer(data_18_range, Deadline_GDD_300:Deadline_GDD_600, names_to="deadlinetype", values_to="deadline")
+
+ggplot(filter(data_18_range_long, year==2017, CPP_YEAR==2018), aes(x=latitude, y=deadline, fill=country)) + scale_fill_manual(values=c("black","gray"), name="Country") + geom_point(size=2, stroke=1, shape=21) + stat_smooth(method=lm, se=FALSE, aes(color=country)) + scale_color_manual(values=c("black","gray"), name="Country") +
+  theme(legend.position="bottom",
+        panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+        panel.background = element_blank(), axis.line = element_line(colour = "black")) + 
+xlab("Latitude") + ylab("Deadline") + facet_wrap(~deadlinetype)
 
 ```
+
+
+
+```{r}
+
+#add range of possible deadline values to Manassas 2014
+man_deadlines_range<-filter(deadlines_range, pop=="MAN", year==2014, CPP_YEAR==2018) %>% select(Deadline_GDD_300:Deadline_GDD_600)  %>% t() %>% data.frame() %>% pull()
+
+man2014_gdd_alt_plot <-
+  ggplot(filter(man2014, DOY_2014 %in% c(238:278)), aes(x=DOY_2014, y=degrees, fill=degreetype)) +
+    theme(text=element_text(size=24), legend.position="none",
+        panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+        panel.background = element_blank(), axis.line = element_line(colour = "black")) + 
+  geom_bar(stat="identity", width=1) + 
+  scale_fill_manual(values=c("dark gray","light gray")) + 
+  geom_hline(yintercept=10, linetype="dashed") + geom_vline(xintercept=251) + geom_vline(xintercept=man_deadlines_range, linetype="dotted") + 
+  annotate("text", x=(man_deadlines_range)-0.5, y=c(1,3,5,7,9,11,13), label=c("GDD300", "GDD350", "GDD400","GDD450","GDD500","GDD550","GDD600"),angle=90) +
+  geom_vline(xintercept=252.5, color="red") + annotate("text",x=250.5, y=20, label="GDD-465 (model used)", fontface="bold", angle=90) + annotate("text",x=253, y=20, label="50% diapause in the field", color="red", angle=90) +
+  xlab("Ordinal Day (2014)") + ylab("Mean Daily Temp (C)")
+
+
+```
+
+
 
 
 ```{r}
